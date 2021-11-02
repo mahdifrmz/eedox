@@ -1,6 +1,8 @@
 global loader                   ; the entry symbol for ELF
+global asm_lgdt
+global asm_load_segregs
 extern kmain
-global outb
+global asm_out
 MAGIC_NUMBER equ 0x1BADB002     ; define the magic number constant
 FLAGS        equ 0x0            ; multiboot flags
 CHECKSUM     equ -MAGIC_NUMBER  ; calculate the checksum
@@ -15,72 +17,47 @@ align 4                         ; the code must be 4 byte aligned
 loader:                         ; the loader label (defined as entry point in linker script)
     mov esp, kernel_stack + KERNEL_STACK_SIZE
     mov ebp, esp
-    lgdt [gdt_descriptor]
-    mov ax, DATA_SEG
+    call kmain
+asm_out:
+    push ebp
+    mov ebp, esp
+
+    push eax
+    push edx
+    mov al, [ebp + 12]    ; move the data to be sent into the al register
+    mov dx, [ebp + 8]    ; move the address of the I/O port into the dx register
+    out dx, al           ; send the data to the I/O port
+    pop edx
+    pop eax
+
+    mov esp, ebp
+    pop ebp
+    ret
+asm_lgdt:
+
+    push ebp
+    mov ebp, esp
+
+    lgdt [ebp+8]
+    
+    mov esp, ebp
+    pop ebp
+    ret
+asm_load_segregs:
+    push ebp
+    mov ebp, esp
+
+    mov ax, 0x10
     mov ss, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
     mov ds, ax
-    jmp CODE_SEG:far_jump
-far_jump:
-    call kmain
-loop:
-    jmp loop
-outb:
-        push ebp
-        mov ebp, esp
-
-        push eax
-        push edx
-        mov al, [ebp + 12]    ; move the data to be sent into the al register
-        mov dx, [ebp + 8]    ; move the address of the I/O port into the dx register
-        out dx, al           ; send the data to the I/O port
-        pop edx
-        pop eax
-
-        mov esp, ebp
-        pop ebp
-        ret
-
-
-section .data:
-; offset 0x0
-gdt_start: ; don't remove the labels, they're needed to compute sizes and jumps
-    ; the GDT starts with a null 8-byte
-    dd 0x0 ; 4 byte
-    dd 0x0 ; 4 byte
-
-; GDT for code segment. base = 0x00000000, length = 0xfffff
-; for flags, refer to os-dev.pdf document, page 36
-gdt_code: 
-    dw 0xffff    ; segment length, bits 0-15
-    dw 0x0       ; segment base, bits 0-15
-    db 0x0       ; segment base, bits 16-23
-    db 10011010b ; flags (8 bits)
-    db 11001111b ; flags (4 bits) + segment length, bits 16-19
-    db 0x0       ; segment base, bits 24-31
-
-; GDT for data segment. base and length identical to code segment
-; some flags changed, again, refer to os-dev.pdf
-gdt_data:
-    dw 0xffff
-    dw 0x0
-    db 0x0
-    db 10010010b
-    db 11001111b
-    db 0x0
-
-gdt_end:
-
-; GDT descriptor
-gdt_descriptor:
-    dw gdt_end - gdt_start - 1 ; size (16 bit), always one less of its true size
-    dd gdt_start ; address (32 bit)
-
-; define some constants for later use
-CODE_SEG equ gdt_code - gdt_start
-DATA_SEG equ gdt_data - gdt_start
+    jmp 0x08:asm_load_segregs_far_jump
+asm_load_segregs_far_jump:
+    mov esp, ebp
+    pop ebp
+    ret
 
 section .bss:
 align 4
