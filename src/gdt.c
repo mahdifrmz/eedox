@@ -1,4 +1,5 @@
 #include <gdt.h>
+#include <asm.h>
 
 void load_gdt_recs(gdtrec *gdt_records)
 {
@@ -28,8 +29,7 @@ void load_gdt_recs(gdtrec *gdt_records)
 
     gdtarray arr;
     arr.ptr = gdt_records;
-    arr.len = 3 * sizeof(gdt_records) - 1;
+    arr.len = 3 * sizeof(gdtrec) - 1;
 
     asm_lgdt(arr);
-    asm_load_segregs();
 }

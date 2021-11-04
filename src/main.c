@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <terminal.h>
 #include <gdt.h>
+#include <asm.h>
 
 terminal_t glb_term;
 gdtrec glb_gdt_records[3];
@@ -45,21 +46,6 @@ void each_irq_handler_15();
 
 typedef struct
 {
-    uint16_t offset_1; // offset bits 0..15
-    uint16_t selector; // a code segment selector in GDT or LDT
-    uint8_t zero;      // unused, set to 0
-    uint8_t type_attr; // type and attributes, see below
-    uint16_t offset_2; // offset bits 16..31
-} __attribute__((packed)) idtrec;
-
-typedef struct
-{
-    unsigned short len;
-    idtrec *ptr;
-} __attribute__((packed)) idtarray;
-
-typedef struct
-{
     uint32_t ds;                                     // Data segment selector
     uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
     uint32_t int_no;                                 // Interrupt number and error code (if applicable)
@@ -82,11 +68,6 @@ void interrupt_handler(registers regs)
         term_print(&glb_term, "\n");
     }
 }
-
-void asm_lgdt(gdtarray);
-void asm_lidt(idtarray);
-void asm_load_segregs();
-void asm_out(unsigned short port, unsigned char byte);
 
 void irq_handler(registers regs)
 {
@@ -162,26 +143,17 @@ void load_idt_recs()
 
     idtarray arr;
     arr.ptr = idt_records;
-    arr.len = sizeof(idt_records) - 1;
+    arr.len = 256 * sizeof(idtrec) - 1;
 
     asm_lidt(arr);
 }
 
 void init_timer(uint32_t frequency)
 {
-    // The value we send to the PIT is the value to divide it's input clock
-    // (1193180 Hz) by, to get our required frequency. Important to note is
-    // that the divisor must be small enough to fit into 16-bits.
     uint16_t divisor = 1193180 / frequency;
-
-    // Send the command byte.
     asm_out(0x43, 0x36);
-
-    // Divisor has to be sent byte-wise, so split here into upper/lower bytes.
     uint8_t l = (uint8_t)(divisor % 256);
     uint8_t h = (uint8_t)(divisor / 256);
-
-    // Send the frequency divisor.
     asm_out(0x40, l);
     asm_out(0x40, h);
 }
@@ -189,9 +161,11 @@ void init_timer(uint32_t frequency)
 int kmain()
 {
     term_init(&glb_term);
+    term_fg(&glb_term);
     load_gdt_recs(glb_gdt_records);
     load_idt_recs();
-    init_timer(1);
-    // term_clear();
+    term_print(&glb_term, "salam\n");
+    // init_timer(100);
+    // term_clear(&glb_term);
     return 0;
 }

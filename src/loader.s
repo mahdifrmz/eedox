@@ -1,22 +1,20 @@
 global loader                   ; the entry symbol for ELF
 global asm_lgdt
 global asm_lidt
-global asm_load_segregs
-extern kmain
-extern irq_handler
-extern term_print_dword_dec
-extern term_print_endl
-extern term_print_flag
-extern interrupt_handler
-global asm_out
-MAGIC_NUMBER equ 0x1BADB002     ; define the magic number constant
-FLAGS        equ 0x0            ; multiboot flags
-CHECKSUM     equ -MAGIC_NUMBER  ; calculate the checksum
+    extern kmain
+    extern irq_handler
+    extern term_print_dword_dec
+    extern term_print_endl
+    extern term_print_flag
+    extern interrupt_handler
+    
+    MAGIC_NUMBER equ 0x1BADB002     ; define the magic number constant
+    FLAGS        equ 0x0            ; multiboot flags
+    CHECKSUM     equ -MAGIC_NUMBER  ; calculate the checksum
                                     ; (magic number + checksum + flags should equal 0)
-KERNEL_STACK_SIZE equ 4096
-
-SEG_CODE equ 0x08
-SEG_DATA equ 0x10
+    KERNEL_STACK_SIZE equ 4096
+    SEG_CODE equ 0x08
+    SEG_DATA equ 0x10
 
 [BITS 32]                       ; All instructions should be 32-bit.
 [GLOBAL mboot]                  ; Make 'mboot' accessible from C.
@@ -41,60 +39,10 @@ section .text:                     ; Kernel entry point (initial EIP).
 loader:                         ; the loader label (defined as entry point in linker script)
     mov esp, kernel_stack + KERNEL_STACK_SIZE
     mov ebp, esp
-    call kmain
     sti
+    call kmain
     ; int 17
     jmp $
-asm_out:
-    push ebp
-    mov ebp, esp
-
-    push eax
-    push edx
-    mov al, [ebp + 12]    ; move the data to be sent into the al register
-    mov dx, [ebp + 8]    ; move the address of the I/O port into the dx register
-    out dx, al           ; send the data to the I/O port
-    pop edx
-    pop eax
-
-    mov esp, ebp
-    pop ebp
-    ret
-asm_lgdt:
-
-    push ebp
-    mov ebp, esp
-
-    lgdt [ebp+8]
-    
-    mov esp, ebp
-    pop ebp
-    ret
-asm_lidt:
-
-    push ebp
-    mov ebp, esp
-
-    lidt [ebp+8]
-    
-    mov esp, ebp
-    pop ebp
-    ret
-asm_load_segregs:
-    push ebp
-    mov ebp, esp
-
-    mov ax, SEG_DATA
-    mov ss, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-    mov ds, ax
-    jmp SEG_CODE:asm_load_segregs_far_jump
-asm_load_segregs_far_jump:
-    mov esp, ebp
-    pop ebp
-    ret
 
 %macro IRQ 1
     global each_irq_handler_%1

@@ -1,6 +1,7 @@
 #include <terminal.h>
+#include <asm.h>
 
-char *frame_buffer = 0xb8000;
+char *frame_buffer = (char *)0xb8000;
 
 void term_raw_putchar(int row, int col, char c, color fg, color bg)
 {
@@ -29,7 +30,7 @@ void term_scrollup(terminal_t *term)
             term->cells[i][j] = c;
             if (term->active)
             {
-                term_putchar(i, j, c, color_white, color_black);
+                term_raw_putchar(i, j, c, color_white, color_black);
             }
         }
     }
@@ -38,7 +39,7 @@ void term_scrollup(terminal_t *term)
         term->cells[TERMROWS - 1][j] = '\0';
         if (term->active)
         {
-            term_putchar(TERMROWS - 1, j, '\0', color_white, color_black);
+            term_raw_putchar(TERMROWS - 1, j, '\0', color_white, color_black);
         }
     }
 }
@@ -54,7 +55,7 @@ void term_write_char(terminal_t *term, char c)
     {
         if (term->active)
         {
-            term_putchar(term->currow, term->curcol, c, color_white, color_black);
+            term_raw_putchar(term->currow, term->curcol, c, color_white, color_black);
         }
         term->cells[term->currow][term->curcol] = c;
         term->curcol++;
@@ -119,7 +120,7 @@ void term_clear(terminal_t *term)
             term->cells[i][j] = '\0';
             if (term->active)
             {
-                term_putchar(i, j, '\0', color_white, color_black);
+                term_raw_putchar(i, j, '\0', color_white, color_black);
             }
         }
     }
