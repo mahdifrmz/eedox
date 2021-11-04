@@ -1,4 +1,4 @@
-CFLAGS = -m32 -nostdlib -fno-builtin -fno-stack-protector \
+CFLAGS = -m32 -nostdlib -fno-builtin -fno-stack-protector -Isrc \
              -nostartfiles -nodefaultlibs -Wall -Wextra -Werror
 # -nostdinc
 OBJECTS = build/main.o build/loader.o

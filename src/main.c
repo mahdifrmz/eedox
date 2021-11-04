@@ -1,8 +1,7 @@
 #include <stdint.h>
+#include <terminal.h>
 
-char *frame_buffer = (char *)0xb8000;
-#define TERMCOLS 80
-#define TERMROWS 25
+terminal_t glb_term;
 
 void interrupt_handler_0();
 void interrupt_handler_1();
@@ -87,25 +86,13 @@ typedef enum
     igate_type_task = 0x85,
 } igate_type;
 
-typedef enum
-{
-    color_white = 15,
-    color_black = 0,
-    color_red = 4,
-    color_blue = 1,
-} color;
-
-void term_print_buffer(char *str, int len);
-void term_print(char *str);
-void term_print_dword_dec(uint32_t i);
-
 void interrupt_handler(registers regs)
 {
     if (regs.int_no != 32)
     {
-        term_print("interrupt ");
-        term_print_dword_dec(regs.int_no);
-        term_print("\n");
+        term_print(&glb_term, "interrupt ");
+        term_print_dword_dec(&glb_term, regs.int_no);
+        term_print(&glb_term, "\n");
     }
 }
 
@@ -249,147 +236,9 @@ void init_timer(uint32_t frequency)
     asm_out(0x40, h);
 }
 
-void term_putchar(int row, int col, char c, color fg, color bg)
-{
-    int index = row * TERMCOLS + col;
-    frame_buffer[index * 2] = c;
-    frame_buffer[index * 2 + 1] = bg * 16 + fg;
-}
-
-void term_set_cursor(int row, int col)
-{
-    unsigned short index = row * TERMCOLS + col;
-    asm_out(0x03d4, 14);
-    asm_out(0x03d5, index / 256);
-    asm_out(0x03d4, 15);
-    asm_out(0x03d5, index % 256);
-}
-
-int term_currow = 0;
-int term_curcol = 0;
-char terminal[TERMROWS][TERMCOLS];
-
-void term_scrollup()
-{
-    for (int i = 0; i < TERMROWS - 1; i++)
-    {
-        for (int j = 0; j < TERMCOLS; j++)
-        {
-            char c = terminal[i + 1][j];
-            terminal[i][j] = c;
-            term_putchar(i, j, c, color_white, color_black);
-        }
-    }
-    for (int j = 0; j < TERMCOLS; j++)
-    {
-        terminal[TERMROWS - 1][j] = '\0';
-        term_putchar(TERMROWS - 1, j, '\0', color_white, color_black);
-    }
-}
-
-void term_write_char(char c)
-{
-    if (c == '\n')
-    {
-        term_curcol = 0;
-        term_currow++;
-    }
-    else
-    {
-        term_putchar(term_currow, term_curcol, c, color_white, color_black);
-        terminal[term_currow][term_curcol] = c;
-        term_curcol++;
-        if (term_curcol == TERMCOLS)
-        {
-            term_curcol = 0;
-            term_currow++;
-        }
-    }
-    if (term_currow == TERMROWS)
-    {
-        term_scrollup();
-        term_currow--;
-    }
-    term_set_cursor(term_currow, term_curcol);
-}
-
-void term_init()
-{
-    for (int i = 0; i < TERMROWS; i++)
-    {
-        for (int j = 0; j < TERMCOLS; j++)
-        {
-            terminal[i][j] = '\0';
-        }
-    }
-    term_curcol = 0;
-    term_currow = 0;
-    term_set_cursor(0, 0);
-}
-
-void term_clear()
-{
-    for (int i = 0; i < TERMROWS; i++)
-    {
-        for (int j = 0; j < TERMCOLS; j++)
-        {
-            terminal[i][j] = '\0';
-            term_putchar(i, j, '\0', color_white, color_black);
-        }
-    }
-    term_curcol = 0;
-    term_currow = 0;
-    term_set_cursor(0, 0);
-}
-
-void term_print_buffer(char *str, int len)
-{
-    for (int i = 0; i < len; i++)
-    {
-        term_write_char(str[i]);
-    }
-}
-
-void term_print(char *str)
-{
-    while (*str != '\0')
-    {
-        term_write_char(*(str++));
-    }
-}
-
-void term_print_dword_dec(uint32_t i)
-{
-    if (!i)
-    {
-        term_print("0");
-        return;
-    }
-    const int STACK_LEN = 11;
-    char stack[STACK_LEN];
-    stack[STACK_LEN - 1] = '\0';
-    int sidx = STACK_LEN - 2;
-    while (i != 0)
-    {
-        stack[sidx--] = (i % 10) + '0';
-        i /= 10;
-    }
-    term_print(stack + sidx + sizeof(char));
-}
-
-void term_print_flag()
-{
-    term_print("flag\n");
-}
-
-void term_print_endl()
-{
-    term_print("\n");
-}
-
 int kmain()
 {
-    term_init();
+    term_init(&glb_term);
     load_gdt_recs();
     load_idt_recs();
     init_timer(1);
