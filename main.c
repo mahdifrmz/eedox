@@ -24,6 +24,23 @@ void interrupt_handler_16();
 void interrupt_handler_17();
 void interrupt_handler_18();
 
+void each_irq_handler_0();
+void each_irq_handler_1();
+void each_irq_handler_2();
+void each_irq_handler_3();
+void each_irq_handler_4();
+void each_irq_handler_5();
+void each_irq_handler_6();
+void each_irq_handler_7();
+void each_irq_handler_8();
+void each_irq_handler_9();
+void each_irq_handler_10();
+void each_irq_handler_11();
+void each_irq_handler_12();
+void each_irq_handler_13();
+void each_irq_handler_14();
+void each_irq_handler_15();
+
 typedef struct
 {
     unsigned short length;
@@ -84,15 +101,29 @@ void term_print_dword_dec(uint32_t i);
 
 void interrupt_handler(registers regs)
 {
-    term_print("interrupt ");
-    term_print_dword_dec(regs.int_no);
-    term_print("\n");
+    if (regs.int_no != 32)
+    {
+        term_print("interrupt ");
+        term_print_dword_dec(regs.int_no);
+        term_print("\n");
+    }
 }
 
 void asm_lgdt(gdtarray);
 void asm_lidt(idtarray);
 void asm_load_segregs();
 void asm_out(unsigned short port, unsigned char byte);
+
+void irq_handler(registers regs)
+{
+    if (regs.int_no >= 8)
+    {
+        asm_out(0xA0, 0x20);
+    }
+    asm_out(0x20, 0x20);
+    regs.int_no += 32;
+    interrupt_handler(regs);
+}
 
 gdtrec gdt_records[3];
 idtrec idt_records[256];
@@ -164,11 +195,58 @@ void load_idt_recs()
     idt_records[17] = create_idt_rec(interrupt_handler_17, igate_type_trap);
     idt_records[18] = create_idt_rec(interrupt_handler_18, igate_type_trap);
 
+    asm_out(0x20, 0x11);
+    asm_out(0xA0, 0x11);
+    asm_out(0x21, 0x20);
+    asm_out(0xA1, 0x28);
+    asm_out(0x21, 0x04);
+    asm_out(0xA1, 0x02);
+    asm_out(0x21, 0x01);
+    asm_out(0xA1, 0x01);
+    asm_out(0x21, 0x0);
+    asm_out(0xA1, 0x0);
+
+    idt_records[32 + 0] = create_idt_rec(each_irq_handler_0, igate_type_trap);
+    idt_records[32 + 1] = create_idt_rec(each_irq_handler_1, igate_type_trap);
+    idt_records[32 + 2] = create_idt_rec(each_irq_handler_2, igate_type_trap);
+    idt_records[32 + 3] = create_idt_rec(each_irq_handler_3, igate_type_trap);
+    idt_records[32 + 4] = create_idt_rec(each_irq_handler_4, igate_type_trap);
+    idt_records[32 + 5] = create_idt_rec(each_irq_handler_5, igate_type_trap);
+    idt_records[32 + 6] = create_idt_rec(each_irq_handler_6, igate_type_trap);
+    idt_records[32 + 7] = create_idt_rec(each_irq_handler_7, igate_type_trap);
+    idt_records[32 + 8] = create_idt_rec(each_irq_handler_8, igate_type_trap);
+    idt_records[32 + 9] = create_idt_rec(each_irq_handler_9, igate_type_trap);
+    idt_records[32 + 10] = create_idt_rec(each_irq_handler_10, igate_type_trap);
+    idt_records[32 + 11] = create_idt_rec(each_irq_handler_11, igate_type_trap);
+    idt_records[32 + 12] = create_idt_rec(each_irq_handler_12, igate_type_trap);
+    idt_records[32 + 13] = create_idt_rec(each_irq_handler_13, igate_type_trap);
+    idt_records[32 + 14] = create_idt_rec(each_irq_handler_14, igate_type_trap);
+    idt_records[32 + 15] = create_idt_rec(each_irq_handler_15, igate_type_trap);
+
     idtarray arr;
     arr.ptr = idt_records;
     arr.len = sizeof(idt_records) - 1;
 
     asm_lidt(arr);
+}
+
+void init_timer(uint32_t frequency)
+{
+    // The value we send to the PIT is the value to divide it's input clock
+    // (1193180 Hz) by, to get our required frequency. Important to note is
+    // that the divisor must be small enough to fit into 16-bits.
+    uint16_t divisor = 1193180 / frequency;
+
+    // Send the command byte.
+    asm_out(0x43, 0x36);
+
+    // Divisor has to be sent byte-wise, so split here into upper/lower bytes.
+    uint8_t l = (uint8_t)(divisor % 256);
+    uint8_t h = (uint8_t)(divisor / 256);
+
+    // Send the frequency divisor.
+    asm_out(0x40, l);
+    asm_out(0x40, h);
 }
 
 void term_putchar(int row, int col, char c, color fg, color bg)
@@ -314,6 +392,7 @@ int kmain()
     term_init();
     load_gdt_recs();
     load_idt_recs();
+    init_timer(1);
     // term_clear();
     return 0;
 }

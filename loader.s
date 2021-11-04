@@ -3,6 +3,7 @@ global asm_lgdt
 global asm_lidt
 global asm_load_segregs
 extern kmain
+extern irq_handler
 extern term_print_dword_dec
 extern term_print_endl
 extern term_print_flag
@@ -38,16 +39,11 @@ align 4                         ; the code must be 4 byte aligned
 
 section .text:                     ; Kernel entry point (initial EIP).
 loader:                         ; the loader label (defined as entry point in linker script)
-    cli
     mov esp, kernel_stack + KERNEL_STACK_SIZE
     mov ebp, esp
     call kmain
-    int 6
-    int 6
-    int 3
-    int 8
-    int 6
-    int 15
+    sti
+    ; int 17
     jmp $
 asm_out:
     push ebp
@@ -100,6 +96,14 @@ asm_load_segregs_far_jump:
     pop ebp
     ret
 
+%macro IRQ 1
+    global each_irq_handler_%1
+    each_irq_handler_%1
+        cli
+        push    dword %1                    ; push the interrupt number
+        jmp     common_irq_handler    ; jump to the common handler
+%endmacro
+
 %macro no_error_code_interrupt_handler 1
     global interrupt_handler_%1
     interrupt_handler_%1:
@@ -128,7 +132,6 @@ common_interrupt_handler:
     mov gs, ax
     mov ss, ax
     
-
     call interrupt_handler
 
     pop eax
@@ -163,6 +166,50 @@ common_interrupt_handler:
     no_error_code_interrupt_handler 16
     no_error_code_interrupt_handler 17
     no_error_code_interrupt_handler 18
+
+common_irq_handler:
+
+    pusha
+    mov ax, ds
+    push eax
+    mov ax, SEG_DATA
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    mov ss, ax
+
+    call irq_handler
+
+    pop eax
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    mov ss, ax
+
+    popa
+    
+    add esp, 4
+    sti
+    iret
+
+    IRQ 0
+    IRQ 1
+    IRQ 2
+    IRQ 3
+    IRQ 4
+    IRQ 5
+    IRQ 6
+    IRQ 7
+    IRQ 8
+    IRQ 9
+    IRQ 10
+    IRQ 11
+    IRQ 12
+    IRQ 13
+    IRQ 14
+    IRQ 15
 
 section .bss:
 align 4
