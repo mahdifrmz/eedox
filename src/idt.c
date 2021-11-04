@@ -69,8 +69,10 @@ void remap_PICs()
     asm_out(0xA1, 0x0);
 }
 
-void load_idt_recs(idtrec *idt_records)
+void load_idt_recs(idtrec *idt_records, void *int_handler, void *irq_handler)
 {
+    set_interrupt_handler(int_handler);
+    set_irq_handler(irq_handler);
     load_idt_trap_recs(idt_records);
     load_idt_hardint_recs(idt_records);
     remap_PICs();

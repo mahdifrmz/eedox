@@ -32,7 +32,9 @@ idtrec create_idt_rec(void *handler, igate_type type);
 void load_idt_trap_recs(idtrec *idt_records);
 void load_idt_hardint_recs(idtrec *idt_records);
 void remap_PICs();
-void load_idt_recs(idtrec *idt_records);
+void load_idt_recs(idtrec *idt_records, void *int_handler, void *irq_handler);
+void set_interrupt_handler(void *handler);
+void set_irq_handler(void *handler);
 
 void interrupt_handler_0();
 void interrupt_handler_1();

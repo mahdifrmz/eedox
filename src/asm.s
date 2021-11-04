@@ -2,6 +2,7 @@
     SEG_DATA equ 0x10
 
     global asm_out
+    global asm_in
     global asm_lgdt
     global asm_lidt
 
@@ -9,13 +10,22 @@ asm_out:
     push ebp
     mov ebp, esp
 
-    push eax
-    push edx
     mov al, [ebp + 12]    ; move the data to be sent into the al register
     mov dx, [ebp + 8]    ; move the address of the I/O port into the dx register
     out dx, al           ; send the data to the I/O port
-    pop edx
-    pop eax
+
+    mov esp, ebp
+    pop ebp
+    ret
+
+asm_in:
+    push ebp
+    mov ebp, esp
+
+    xor eax,eax
+
+    mov dx, [ebp + 8]    ; move the address of the I/O port into the dx register
+    in al, dx           ; send the data to the I/O port
 
     mov esp, ebp
     pop ebp

@@ -1,8 +1,11 @@
     SEG_CODE equ 0x08
     SEG_DATA equ 0x10
-    extern irq_handler
-    extern interrupt_handler
-        
+    global set_interrupt_handler
+    global set_irq_handler
+
+section .data:
+    interrupt_handler dd 0x0 
+    irq_handler dd 0x0
 
 %macro IRQ 1
     global each_irq_handler_%1
@@ -40,7 +43,7 @@ common_interrupt_handler:
     mov gs, ax
     mov ss, ax
     
-    call interrupt_handler
+    call [interrupt_handler]
 
     pop eax
     mov ds, ax
@@ -87,7 +90,7 @@ common_irq_handler:
     mov gs, ax
     mov ss, ax
 
-    call irq_handler
+    call [irq_handler]
 
     pop eax
     mov ds, ax
@@ -118,3 +121,24 @@ common_irq_handler:
     IRQ 13
     IRQ 14
     IRQ 15
+
+set_interrupt_handler:
+    push ebp
+    mov ebp, esp
+
+    mov eax, [ebp+8]
+    mov [interrupt_handler], eax
+    
+    mov esp, ebp
+    pop ebp
+    ret
+set_irq_handler:
+    push ebp
+    mov ebp, esp
+
+    mov eax, [ebp+8]
+    mov [irq_handler], eax
+    
+    mov esp, ebp
+    pop ebp
+    ret

@@ -6,6 +6,7 @@
 #include <idt.h>
 
 void asm_out(unsigned short port, unsigned char byte);
+uint8_t asm_in(unsigned short port);
 void asm_lgdt(gdtarray arr);
 void asm_lidt(idtarray arr);
 
