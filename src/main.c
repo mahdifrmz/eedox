@@ -1,7 +1,10 @@
 #include <stdint.h>
 #include <terminal.h>
+#include <gdt.h>
 
 terminal_t glb_term;
+gdtrec glb_gdt_records[3];
+idtrec idt_records[256];
 
 void interrupt_handler_0();
 void interrupt_handler_1();
@@ -39,22 +42,6 @@ void each_irq_handler_12();
 void each_irq_handler_13();
 void each_irq_handler_14();
 void each_irq_handler_15();
-
-typedef struct
-{
-    unsigned short length;
-    unsigned short base_l;
-    unsigned char base_m;
-    unsigned char flags;
-    unsigned char fllen;
-    unsigned char base_h;
-} __attribute__((packed)) gdtrec;
-
-typedef struct
-{
-    unsigned short len;
-    gdtrec *ptr;
-} __attribute__((packed)) gdtarray;
 
 typedef struct
 {
@@ -110,43 +97,6 @@ void irq_handler(registers regs)
     asm_out(0x20, 0x20);
     regs.int_no += 32;
     interrupt_handler(regs);
-}
-
-gdtrec gdt_records[3];
-idtrec idt_records[256];
-
-void load_gdt_recs()
-{
-    // null : 0x00
-    gdt_records[0].length = 0;
-    gdt_records[0].base_l = 0;
-    gdt_records[0].base_m = 0;
-    gdt_records[0].flags = 0;
-    gdt_records[0].fllen = 0;
-    gdt_records[0].base_h = 0;
-
-    // code : 0x08
-    gdt_records[1].length = 0xffff;
-    gdt_records[1].base_l = 0;
-    gdt_records[1].base_m = 0;
-    gdt_records[1].flags = 0b10011010;
-    gdt_records[1].fllen = 0b11001111;
-    gdt_records[1].base_h = 0;
-
-    // data : 0x10
-    gdt_records[2].length = 0xffff;
-    gdt_records[2].base_l = 0;
-    gdt_records[2].base_m = 0;
-    gdt_records[2].flags = 0b10010010;
-    gdt_records[2].fllen = 0b11001111;
-    gdt_records[2].base_h = 0;
-
-    gdtarray arr;
-    arr.ptr = gdt_records;
-    arr.len = sizeof(gdt_records) - 1;
-
-    asm_lgdt(arr);
-    asm_load_segregs();
 }
 
 idtrec create_idt_rec(void *handler, igate_type type)
@@ -239,7 +189,7 @@ void init_timer(uint32_t frequency)
 int kmain()
 {
     term_init(&glb_term);
-    load_gdt_recs();
+    load_gdt_recs(glb_gdt_records);
     load_idt_recs();
     init_timer(1);
     // term_clear();
