@@ -29,7 +29,7 @@ void load_gdt_recs(gdtrec *gdt_records)
 
     gdtarray arr;
     arr.ptr = gdt_records;
-    arr.len = 3 * sizeof(gdtrec) - 1;
+    arr.len = GDTARR_LEN * sizeof(gdtrec) - 1;
 
     asm_lgdt(arr);
 }

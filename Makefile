@@ -1,7 +1,7 @@
 CFLAGS = -m32 -nostdlib -fno-builtin -fno-stack-protector -Isrc \
              -nostartfiles -nodefaultlibs -Wall -Wextra -Werror
 # -nostdinc
-OBJECTS = build/main.o build/loader.o build/asm.o build/terminal.o build/gdt.o
+OBJECTS = build/main.o build/loader.o build/asm.o build/terminal.o build/gdt.o build/idt.o build/ihandle.o
 
 build/os.iso: build/ build/kernel
 	grub-mkrescue -o $@ iso
