@@ -33,6 +33,8 @@ void term_print_flag(terminal_t *term);
 void term_print_endl(terminal_t *term);
 void term_fg(terminal_t *term);
 void term_bg(terminal_t *term);
+char term_curc(terminal_t *term);
+void term_backspace(terminal_t *term);
 
 void term_raw_set_cursor(int row, int col);
 void term_raw_putchar(int row, int col, char c, color fg, color bg);

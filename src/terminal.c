@@ -20,6 +20,22 @@ void term_raw_set_cursor(int row, int col)
     asm_out(0x03d5, index % 256);
 }
 
+void term_putchar(terminal_t *term, int row, int col, char c, color fg, color bg)
+{
+    if (term->active)
+    {
+        term_raw_putchar(row, col, c, fg, bg);
+    }
+}
+
+void term_set_cursor(terminal_t *term, int row, int col)
+{
+    if (term->active)
+    {
+        term_raw_set_cursor(row, col);
+    }
+}
+
 void term_scrollup(terminal_t *term)
 {
     for (int i = 0; i < TERMROWS - 1; i++)
@@ -28,19 +44,13 @@ void term_scrollup(terminal_t *term)
         {
             char c = term->cells[i + 1][j];
             term->cells[i][j] = c;
-            if (term->active)
-            {
-                term_raw_putchar(i, j, c, color_white, color_black);
-            }
+            term_putchar(term, i, j, c, color_white, color_black);
         }
     }
     for (int j = 0; j < TERMCOLS; j++)
     {
         term->cells[TERMROWS - 1][j] = '\0';
-        if (term->active)
-        {
-            term_raw_putchar(TERMROWS - 1, j, '\0', color_white, color_black);
-        }
+        term_putchar(term, TERMROWS - 1, j, '\0', color_white, color_black);
     }
 }
 
@@ -55,7 +65,7 @@ void term_write_char(terminal_t *term, char c)
     {
         if (term->active)
         {
-            term_raw_putchar(term->currow, term->curcol, c, color_white, color_black);
+            term_putchar(term, term->currow, term->curcol, c, color_white, color_black);
         }
         term->cells[term->currow][term->curcol] = c;
         term->curcol++;
@@ -75,8 +85,45 @@ void term_write_char(terminal_t *term, char c)
     }
     if (term->active)
     {
-        term_raw_set_cursor(term->currow, term->curcol);
+        term_set_cursor(term, term->currow, term->curcol);
     }
+}
+
+char term_curc(terminal_t *term)
+{
+    return term->cells[term->currow][term->curcol];
+}
+
+void term_backspace(terminal_t *term)
+{
+    if (term->curcol == 0 && term->currow == 0)
+    {
+        return;
+    }
+    if (term->curcol == 0)
+    {
+        term->curcol = TERMCOLS - 1;
+        term->currow--;
+        while (term_curc(term) == '\0' && term->curcol >= 0)
+        {
+            term->curcol--;
+        }
+        if (term->curcol != TERMCOLS - 1)
+        {
+            term->curcol++;
+        }
+        else
+        {
+            term_putchar(term, term->currow, term->curcol, '\0', color_white, color_black);
+        }
+    }
+    else
+    {
+        term->curcol--;
+        term->cells[term->currow][term->curcol] = 0;
+        term_putchar(term, term->currow, term->curcol, '\0', color_white, color_black);
+    }
+    term_set_cursor(term, term->currow, term->curcol);
 }
 
 void term_init(terminal_t *term)
@@ -120,16 +167,13 @@ void term_clear(terminal_t *term)
             term->cells[i][j] = '\0';
             if (term->active)
             {
-                term_raw_putchar(i, j, '\0', color_white, color_black);
+                term_putchar(term, i, j, '\0', color_white, color_black);
             }
         }
     }
     term->curcol = 0;
     term->currow = 0;
-    if (term->active)
-    {
-        term_raw_set_cursor(0, 0);
-    }
+    term_set_cursor(term, 0, 0);
 }
 
 void term_print_buffer(terminal_t *term, char *str, int len)

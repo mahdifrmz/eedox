@@ -64,7 +64,14 @@ void interrupt_handler(registers regs)
             char ch = kbchars[scancode];
             if (ch != 0)
             {
-                term_write_char(&glb_term, ch);
+                if (ch == '\b')
+                {
+                    term_backspace(&glb_term);
+                }
+                else
+                {
+                    term_write_char(&glb_term, ch);
+                }
             }
         }
     }
@@ -103,7 +110,7 @@ int kmain()
     term_fg(&glb_term);
     load_gdt_recs(glb_gdt_records);
     load_idt_recs(idt_records, interrupt_handler, irq_handler);
-    term_print(&glb_term, "salam\n");
+    term_print(&glb_term, "hello world\n");
     // init_timer(100);
     // term_clear(&glb_term);
     return 0;
