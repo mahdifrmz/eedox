@@ -11,6 +11,7 @@ section .data:
     global each_irq_handler_%1
     each_irq_handler_%1
         cli
+        push    dword 0
         push    dword %1                    ; push the interrupt number
         jmp     common_irq_handler    ; jump to the common handler
 %endmacro
@@ -19,6 +20,7 @@ section .data:
     global interrupt_handler_%1
     interrupt_handler_%1:
         cli
+        push    dword 0
         push    dword %1                    ; push the interrupt number
         jmp     common_interrupt_handler    ; jump to the common handler
 %endmacro
@@ -54,7 +56,7 @@ common_interrupt_handler:
 
     popa
     
-    add esp, 4
+    add esp, 8
     sti
     iret
 
@@ -70,7 +72,7 @@ common_interrupt_handler:
     NERR_INT_HANLDLER 9
     ERR_INT_HANLDLER    10
     ERR_INT_HANLDLER    11
-    NERR_INT_HANLDLER 12
+    ERR_INT_HANLDLER    12
     ERR_INT_HANLDLER    13
     ERR_INT_HANLDLER    14
     NERR_INT_HANLDLER 15
@@ -101,7 +103,7 @@ common_irq_handler:
 
     popa
     
-    add esp, 4
+    add esp, 8
     sti
     iret
 

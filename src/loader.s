@@ -36,7 +36,7 @@ loader:                         ; the loader label (defined as entry point in li
     mov ebp, esp
     sti
     call kmain
-    ; int 17
+    ; int 4
     jmp $
 section .bss:
 align 4

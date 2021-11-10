@@ -50,7 +50,7 @@ typedef struct
 {
     uint32_t ds;                                     // Data segment selector
     uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
-    uint32_t int_no;                                 // Interrupt number and error code (if applicable)
+    uint32_t int_no, err_code;                       // Interrupt number and error code (if applicable)
     uint32_t eip, cs, eflags, useresp, ss;           // Pushed by the processor automatically.
 } __attribute__((packed)) registers;
 
@@ -113,5 +113,8 @@ int kmain()
     term_print(&glb_term, "hello world\n");
     // init_timer(100);
     // term_clear(&glb_term);
+    // int y = 0;
+    // int v = 9 / y;
+    // term_print_dword_dec(&glb_term, v);
     return 0;
 }
