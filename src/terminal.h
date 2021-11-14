@@ -29,6 +29,7 @@ void term_clear(terminal_t *term);
 void term_print_buffer(terminal_t *term, char *str, int len);
 void term_print(terminal_t *term, char *str);
 void term_print_dword_dec(terminal_t *term, uint32_t i);
+void term_print_dword_hex(terminal_t *term, uint32_t h);
 void term_print_flag(terminal_t *term);
 void term_print_endl(terminal_t *term);
 void term_fg(terminal_t *term);

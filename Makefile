@@ -1,7 +1,7 @@
 CFLAGS = -m32 -nostdlib -fno-builtin -fno-stack-protector -Isrc \
              -nostartfiles -nodefaultlibs -Wall -Wextra -Werror
 # -nostdinc
-OBJECTS = build/main.o build/loader.o build/asm.o build/terminal.o build/gdt.o build/idt.o build/ihandle.o
+OBJECTS = build/ordlist.o build/kheap.o build/main.o build/loader.o build/asm.o build/terminal.o build/gdt.o build/idt.o build/ihandle.o
 
 build/os.iso: build/ build/kernel
 	grub-mkrescue -o $@ iso
@@ -24,3 +24,9 @@ build/:
 
 clean:
 	rm -rf build
+
+build/kheaptest: src/kheap.c test/kheaptest.c src/ordlist.c
+	gcc -Wall -Werror -g -Isrc -m32 test/kheaptest.c src/ordlist.c src/kheap.c -o $@
+
+test: build/kheaptest
+	./$<

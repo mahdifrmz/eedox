@@ -211,6 +211,32 @@ void term_print_dword_dec(terminal_t *term, uint32_t i)
     term_print(term, stack + sidx + sizeof(char));
 }
 
+char dec_to_hex(uint8_t d)
+{
+    if (d < 10)
+    {
+        return '0' + d;
+    }
+    else
+    {
+        return 'a' + d - 10;
+    }
+}
+
+void term_print_dword_hex(terminal_t *term, uint32_t h)
+{
+    char buffer[11];
+    buffer[0] = '0';
+    buffer[1] = 'x';
+    buffer[10] = '\0';
+    for (uint32_t i = 0; i < 8; i++)
+    {
+        buffer[9 - i] = dec_to_hex(h % 16);
+        h /= 16;
+    }
+    term_print(term, buffer);
+}
+
 void term_print_flag(terminal_t *term)
 {
     term_print(term, "flag\n");

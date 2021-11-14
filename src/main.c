@@ -2,10 +2,16 @@
 #include <terminal.h>
 #include <gdt.h>
 #include <asm.h>
+#include <kheap.h>
 
 terminal_t glb_term;
 gdtrec glb_gdt_records[3];
 idtrec idt_records[256];
+
+heap_t glb_heap;
+
+extern uint32_t end;
+uint32_t heapstart = (uint32_t)&end;
 
 unsigned char kbchars[128] = {
     0, 27, '1', '2', '3', '4', '5', '6', '7', '8',    /* 9 */
@@ -111,10 +117,8 @@ int kmain()
     load_gdt_recs(glb_gdt_records);
     load_idt_recs(idt_records, interrupt_handler, irq_handler);
     term_print(&glb_term, "hello world\n");
+    heap_init(&glb_heap, &end, 0x10000000, 0x1000, 1, 1);
     // init_timer(100);
     // term_clear(&glb_term);
-    // int y = 0;
-    // int v = 9 / y;
-    // term_print_dword_dec(&glb_term, v);
     return 0;
 }
