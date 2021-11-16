@@ -3,16 +3,14 @@
 #include <gdt.h>
 #include <asm.h>
 #include <kheap.h>
+#include <paging.h>
+#include <bitset.h>
 
 terminal_t glb_term;
 gdtrec glb_gdt_records[3];
 idtrec idt_records[256];
-
 heap_t glb_heap;
-
 extern uint32_t end;
-uint32_t heapstart = (uint32_t)&end;
-
 unsigned char kbchars[128] = {
     0, 27, '1', '2', '3', '4', '5', '6', '7', '8',    /* 9 */
     '9', '0', '-', '=', '\b',                         /* Backspace */
@@ -52,6 +50,14 @@ unsigned char kbchars[128] = {
     0, /* All other keys are undefined */
 };
 
+void PANIC()
+{
+    term_print(&glb_term, "\nPANIC!");
+    while (1)
+    {
+    }
+}
+
 typedef struct
 {
     uint32_t ds;                                     // Data segment selector
@@ -80,6 +86,10 @@ void interrupt_handler(registers regs)
                 }
             }
         }
+    }
+    else if (regs.int_no == 14)
+    {
+        PANIC();
     }
     else if (regs.int_no != 32)
     {
@@ -116,9 +126,8 @@ int kmain()
     term_fg(&glb_term);
     load_gdt_recs(glb_gdt_records);
     load_idt_recs(idt_records, interrupt_handler, irq_handler);
+    heap_init(&glb_heap, &end, 0x1004000, 0x4000, 1, 1);
+    paging_init();
     term_print(&glb_term, "hello world\n");
-    heap_init(&glb_heap, &end, 0x10000000, 0x1000, 1, 1);
-    // init_timer(100);
-    // term_clear(&glb_term);
     return 0;
 }

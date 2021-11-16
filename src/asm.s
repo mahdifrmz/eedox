@@ -5,7 +5,7 @@
     global asm_in
     global asm_lgdt
     global asm_lidt
-
+    global switch_page_directory
 asm_out:
     push ebp
     mov ebp, esp
@@ -52,7 +52,22 @@ asm_lidt:
     mov ebp, esp
 
     lidt [ebp+8]
+    sti
     
+    mov esp, ebp
+    pop ebp
+    ret
+switch_page_directory:
+    push ebp
+    mov ebp, esp
+
+    mov eax, [esp + 8]
+    mov cr3, eax
+
+    mov eax, cr0
+    or eax, 0x80000000
+    mov cr0, eax
+
     mov esp, ebp
     pop ebp
     ret

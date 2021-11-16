@@ -5,6 +5,7 @@ SECTIONS
   .text 0x100000 :
   {
     code = .; _code = .; __code = .;
+    build/loader.o(.mbhead)
     *(.text)
     . = ALIGN(4096);
   }

@@ -18,6 +18,8 @@ global asm_lidt
 [EXTERN end]                    ; End of the last loadable section.
 
                   ; start of the text (code) section
+
+section .mbhead
 mboot:
 align 4                         ; the code must be 4 byte aligned
     dd MAGIC_NUMBER             ; write the magic number to the machine code,
@@ -34,9 +36,7 @@ section .text:                     ; Kernel entry point (initial EIP).
 loader:                         ; the loader label (defined as entry point in linker script)
     mov esp, kernel_stack + KERNEL_STACK_SIZE
     mov ebp, esp
-    sti
     call kmain
-    ; int 4
     jmp $
 section .bss:
 align 4
