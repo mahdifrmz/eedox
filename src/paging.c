@@ -1,6 +1,7 @@
 #include <paging.h>
 #include <kheap.h>
 #include <bitset.h>
+#include <kutil.h>
 
 extern heap_t glb_heap;
 bitset_t glb_frames;
@@ -37,7 +38,7 @@ page_t *get_page(uint32_t address, page_directory_t *dir)
     uint32_t entry_index = address % 1024;
     if (dir->tables[table_index] == 0x0)
     {
-        dir->tables[table_index] = (page_table_t *)((uint32_t)heap_alloc(&glb_heap, sizeof(page_table_t), 1) | 0x7);
+        dir->tables[table_index] = (page_table_t *)((uint32_t)kmalloc_a(sizeof(page_table_t)) | 0x7);
     }
     page_table_t *table = (page_table_t *)((uint32_t)dir->tables[table_index] & 0xFFFFF000);
     return &table->pages[entry_index];
@@ -47,9 +48,9 @@ void paging_init()
 {
     uint32_t total_frames = 0x100000;
     uint32_t frames_size = total_frames / 8;
-    bitset_init(&glb_frames, heap_alloc(&glb_heap, frames_size, 0), total_frames);
+    bitset_init(&glb_frames, kmalloc(frames_size), total_frames);
 
-    glb_page_directory = heap_alloc(&glb_heap, sizeof(page_directory_t), 1);
+    glb_page_directory = kmalloc_a(sizeof(page_directory_t));
     for (int i = 0; i < 1024; i++)
     {
         glb_page_directory->tables[i] = 0x0;

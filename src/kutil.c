@@ -5,14 +5,24 @@
 extern terminal_t glb_term;
 extern heap_t glb_heap;
 
+void *kmalloc(uint32_t size)
+{
+    return heap_alloc(&glb_heap, size, 0);
+}
+
+void *kmalloc_a(uint32_t size)
+{
+    return heap_alloc(&glb_heap, size, 1);
+}
+
+void kfree(void *ptr)
+{
+    heap_free(&glb_heap, ptr);
+}
+
 void kpanic(const char *message)
 {
-    term_print(&glb_term, "\nPANIC!(");
-    if (message)
-    {
-        term_print(&glb_term, message);
-    }
-    term_print(&glb_term, ")\n");
+    kprintf("PANIC! ( %s )", message);
     while (1)
     {
     }

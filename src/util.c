@@ -169,8 +169,11 @@ int32_t partial_print(char *buffer, int32_t index, const char *message, va_list 
             else if (ty == 's')
             {
                 char *str = va_arg(args, char *);
-                strcpy(buffer, str);
-                buffer += strlen(str);
+                if (str)
+                {
+                    strcpy(buffer, str);
+                    buffer += strlen(str);
+                }
             }
             else
             {

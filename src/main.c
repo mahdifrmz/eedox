@@ -53,14 +53,6 @@ unsigned char kbchars[128] = {
     0, /* All other keys are undefined */
 };
 
-void PANIC()
-{
-    term_print(&glb_term, "\nPANIC!");
-    while (1)
-    {
-    }
-}
-
 typedef struct
 {
     uint32_t ds;                                     // Data segment selector
@@ -92,13 +84,11 @@ void interrupt_handler(registers regs)
     }
     else if (regs.int_no == 14)
     {
-        PANIC();
+        kpanic("paging fault");
     }
     else if (regs.int_no != 32)
     {
-        term_print(&glb_term, "interrupt ");
-        // term_print_dword_dec(&glb_term, regs.int_no);
-        term_print(&glb_term, "\n");
+        kprintf("interrupt %u\n", regs.int_no);
     }
 }
 
@@ -130,8 +120,7 @@ int kmain()
     load_gdt_recs(glb_gdt_records);
     load_idt_recs(idt_records, interrupt_handler, irq_handler);
     heap_init(&glb_heap, &end, 0x1004000, 0x4000, 1, 1);
-
-    term_print(&glb_term, "hello world\n");
     paging_init();
+    kprintf("hello world!\n");
     return 0;
 }
