@@ -176,7 +176,7 @@ void term_clear(terminal_t *term)
     term_set_cursor(term, 0, 0);
 }
 
-void term_print_buffer(terminal_t *term, char *str, int len)
+void term_print_buffer(terminal_t *term, const char *str, int len)
 {
     for (int i = 0; i < len; i++)
     {
@@ -184,62 +184,12 @@ void term_print_buffer(terminal_t *term, char *str, int len)
     }
 }
 
-void term_print(terminal_t *term, char *str)
+void term_print(terminal_t *term, const char *str)
 {
     while (*str != '\0')
     {
         term_write_char(term, *(str++));
     }
-}
-
-void term_print_dword_dec(terminal_t *term, uint32_t i)
-{
-    if (!i)
-    {
-        term_print(term, "0");
-        return;
-    }
-    const int STACK_LEN = 11;
-    char stack[STACK_LEN];
-    stack[STACK_LEN - 1] = '\0';
-    int sidx = STACK_LEN - 2;
-    while (i != 0)
-    {
-        stack[sidx--] = (i % 10) + '0';
-        i /= 10;
-    }
-    term_print(term, stack + sidx + sizeof(char));
-}
-
-char dec_to_hex(uint8_t d)
-{
-    if (d < 10)
-    {
-        return '0' + d;
-    }
-    else
-    {
-        return 'a' + d - 10;
-    }
-}
-
-void term_print_dword_hex(terminal_t *term, uint32_t h)
-{
-    char buffer[11];
-    buffer[0] = '0';
-    buffer[1] = 'x';
-    buffer[10] = '\0';
-    for (uint32_t i = 0; i < 8; i++)
-    {
-        buffer[9 - i] = dec_to_hex(h % 16);
-        h /= 16;
-    }
-    term_print(term, buffer);
-}
-
-void term_print_flag(terminal_t *term)
-{
-    term_print(term, "flag\n");
 }
 
 void term_print_endl(terminal_t *term)

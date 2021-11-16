@@ -5,6 +5,8 @@
 #include <kheap.h>
 #include <paging.h>
 #include <bitset.h>
+#include <kstring.h>
+#include <kutil.h>
 
 terminal_t glb_term;
 gdtrec glb_gdt_records[3];
@@ -94,7 +96,7 @@ void interrupt_handler(registers regs)
     else if (regs.int_no != 32)
     {
         term_print(&glb_term, "interrupt ");
-        term_print_dword_dec(&glb_term, regs.int_no);
+        // term_print_dword_dec(&glb_term, regs.int_no);
         term_print(&glb_term, "\n");
     }
 }
@@ -127,7 +129,7 @@ int kmain()
     load_gdt_recs(glb_gdt_records);
     load_idt_recs(idt_records, interrupt_handler, irq_handler);
     heap_init(&glb_heap, &end, 0x1004000, 0x4000, 1, 1);
-    paging_init();
     term_print(&glb_term, "hello world\n");
+    paging_init();
     return 0;
 }
