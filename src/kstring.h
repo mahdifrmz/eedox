@@ -25,6 +25,7 @@ void kstring_append(kstring_t *kstr, const char *str);
 void kstring_erase(kstring_t *kstr, uint32_t pos, uint32_t len);
 void kstring_insert(kstring_t *kstr, uint32_t pos, const char *str);
 void kstring_assign(kstring_t *kstr, const char *str);
+kstring_t kstring_copy(kstring_t *kstr);
 
 uint32_t kstring_size(kstring_t *kstr);
 uint32_t kstring_cap(kstring_t *kstr);

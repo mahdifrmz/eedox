@@ -4,6 +4,7 @@ CFLAGS = -m32 -nostdlib -fno-builtin -fno-stack-protector -Isrc \
 OBJECTS =\
 	build/util.o \
 	build/kutil.o \
+	build/vec.o \
 	build/kstring.o \
 	build/bitset.o \
 	build/paging.o \

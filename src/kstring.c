@@ -131,6 +131,14 @@ void kstring_assign(kstring_t *kstr, const char *str)
     *kstr = kstring_from_h(str, kstr->heap);
 }
 
+kstring_t kstring_copy(kstring_t *kstr)
+{
+    kstring_t newkstr = *kstr;
+    char *newbuffer = kstring_alloc(kstr, kstr->cap);
+    newkstr.buffer = newbuffer;
+    return newkstr;
+}
+
 uint32_t kstring_size(kstring_t *kstr)
 {
     return kstr->size;
@@ -161,7 +169,7 @@ void kstring_resize(kstring_t *kstr, uint32_t size)
 
 void kstring_fit(kstring_t *kstr)
 {
-    kstring_resize(kstr, kstr->size + 1);
+    kstring_resize(kstr, kstr->size);
 }
 void kstring_free(kstring_t *kstr)
 {
