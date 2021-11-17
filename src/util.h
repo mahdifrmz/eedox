@@ -13,6 +13,7 @@ void memshift(void *dest, int32_t offset, uint32_t size);
 void tostr_u(char *buffer, uint32_t i);
 void tostr_x(char *buffer, uint32_t h);
 char dec_to_hex(uint8_t d);
+int32_t bin_search(uint32_t *ptr, int32_t len, int32_t value);
 
 uint32_t strlen(const char *str);
 void strcpy(char *dest, const char *src);

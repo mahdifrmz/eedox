@@ -1,5 +1,6 @@
 #include <kheap.h>
 #include <assert.h>
+#include <util.h>
 
 int8_t compare(void *a, void *b)
 {
@@ -103,36 +104,6 @@ void heap_high_split(heap_t *heap, hheader_t *hole, uint32_t size)
     }
     ordlist_insert(&heap->index, newhole);
     newhole->is_hole = 1;
-}
-
-int32_t _bin_search(uint32_t *ptr, int32_t from, int32_t to, uint32_t value)
-{
-    if (to < from)
-    {
-        return -1;
-    }
-    uint32_t mid = (from + to) / 2;
-    if (ptr[mid] == value)
-    {
-        return mid;
-    }
-    else if (ptr[mid] > value)
-    {
-        return _bin_search(ptr, from, mid - 1, value);
-    }
-    else
-    {
-        return _bin_search(ptr, mid + 1, to, value);
-    }
-}
-
-int32_t bin_search(uint32_t *ptr, int32_t len, int32_t value)
-{
-    if (len == 0)
-    {
-        return -1;
-    }
-    return _bin_search(ptr, 0, len - 1, value);
 }
 
 uint32_t heap_hole_index(heap_t *heap, hheader_t *head)
