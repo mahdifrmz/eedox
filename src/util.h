@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #define PARTIAL_PRINT_BUFFER_SIZE 512
+#define NULL (void *)0x0
 
 #include <stdint.h>
 #include <stdarg.h>

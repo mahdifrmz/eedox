@@ -8,12 +8,15 @@
 #include <kstring.h>
 #include <kutil.h>
 #include <vec.h>
+#include <multsk.h>
+#include <kqueue.h>
 
 terminal_t glb_term;
 gdtrec glb_gdt_records[3];
 idtrec idt_records[256];
-heap_t glb_heap;
+heap_t kernel_heap;
 extern uint32_t end;
+
 unsigned char kbchars[128] = {
     0, 27, '1', '2', '3', '4', '5', '6', '7', '8',    /* 9 */
     '9', '0', '-', '=', '\b',                         /* Backspace */
@@ -86,7 +89,14 @@ void interrupt_handler(registers regs)
     {
         kpanic("paging fault");
     }
-    else if (regs.int_no != 32)
+    else if (regs.int_no == 32)
+    {
+        if (multsk_flag)
+        {
+            multsk_switch();
+        }
+    }
+    else
     {
         kprintf("interrupt %u\n", regs.int_no);
     }
@@ -113,14 +123,42 @@ void init_timer(uint32_t frequency)
     asm_out(0x40, h);
 }
 
-int kmain()
+void move_stack(uint32_t new_address, uint32_t old_address, uint32_t size)
+{
+    for (uint32_t i = new_address; i >= new_address - size; i -= 0x1000)
+    {
+        alloc_frame(get_page(i, 0, current_page_directory), 1, 0);
+    }
+    asm_flush_TLB();
+    uint32_t offset = new_address - old_address;
+    uint32_t old_ebp = asm_get_ebp();
+    uint32_t old_esp = asm_get_esp();
+    uint32_t new_ebp = old_ebp + offset;
+    uint32_t new_esp = old_esp + offset;
+    memcpy((void *)new_esp, (void *)old_esp, old_address - old_esp);
+    for (uint32_t i = new_address; i > new_address - size; i -= 4)
+    {
+        uint32_t value = *(uint32_t *)i;
+        if (value <= old_address && value >= old_esp)
+        {
+            *(uint32_t *)i += offset;
+        }
+    }
+    asm_set_sps(new_ebp, new_esp);
+}
+
+int kmain(uint32_t stack_address)
 {
     term_init(&glb_term);
     term_fg(&glb_term);
     load_gdt_recs(glb_gdt_records);
     load_idt_recs(idt_records, interrupt_handler, irq_handler);
-    heap_init(&glb_heap, &end, 0x1004000, 0x4000, 1, 1);
+    heap_init(&kernel_heap, &end, 0x1004000, 0x4000, 1, 1);
     paging_init();
-    kprintf("hello world!\n");
+    move_stack(0xC0000000, stack_address, 0x2000);
+    multsk_init();
+    init_timer(100);
+    multsk_fork();
+    kprintf("hello from thread %u\n", multk_getpid());
     return 0;
 }

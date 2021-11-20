@@ -2,9 +2,19 @@
 
 void memcpy(void *dest, const void *src, uint32_t size)
 {
-    for (uint32_t i = 0; i < size; i++)
+    if (dest < src)
     {
-        ((char *)dest)[i] = ((char *)src)[i];
+        for (int64_t i = 0; i < size; i++)
+        {
+            ((char *)dest)[i] = ((char *)src)[i];
+        }
+    }
+    else if (dest > src)
+    {
+        for (int64_t i = size - 1; i >= 0; i--)
+        {
+            ((char *)dest)[i] = ((char *)src)[i];
+        }
     }
 }
 

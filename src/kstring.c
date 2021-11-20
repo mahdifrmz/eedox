@@ -1,7 +1,7 @@
 #include <kstring.h>
 #define kstring_INIT_CAP 4
 
-extern heap_t glb_heap;
+extern heap_t kernel_heap;
 
 void *kstring_alloc(kstring_t *kstr, uint32_t size)
 {
@@ -20,7 +20,7 @@ kstring_t kstring_new_sh(uint32_t size, heap_t *heap)
 
 kstring_t kstring_new_s(uint32_t size)
 {
-    return kstring_new_sh(size, &glb_heap);
+    return kstring_new_sh(size, &kernel_heap);
 }
 
 kstring_t kstring_new_h(heap_t *heap)
@@ -30,7 +30,7 @@ kstring_t kstring_new_h(heap_t *heap)
 
 kstring_t kstring_new()
 {
-    return kstring_new_sh(kstring_INIT_CAP, &glb_heap);
+    return kstring_new_sh(kstring_INIT_CAP, &kernel_heap);
 }
 
 kstring_t kstring_from_h(const char *str, heap_t *heap)
@@ -50,7 +50,7 @@ kstring_t kstring_from_h(const char *str, heap_t *heap)
 
 kstring_t kstring_from(const char *str)
 {
-    return kstring_from_h(str, &glb_heap);
+    return kstring_from_h(str, &kernel_heap);
 }
 
 void kstring_push(kstring_t *kstr, char c)

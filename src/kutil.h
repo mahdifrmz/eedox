@@ -3,6 +3,7 @@
 
 #include <terminal.h>
 #include <kheap.h>
+#include <util.h>
 
 void kpanic(const char *message);
 

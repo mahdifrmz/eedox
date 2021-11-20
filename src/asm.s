@@ -5,7 +5,23 @@
     global asm_in
     global asm_lgdt
     global asm_lidt
+    global asm_cli
+    global asm_sti
+
     global switch_page_directory
+    global paging_physcpy
+    
+    global asm_get_eip
+    global asm_get_ebp
+    global asm_get_esp
+    global asm_multsk_switch
+    global asm_set_sps 
+    global asm_flush_TLB
+
+    extern eip_buffer
+    extern ebp_buffer
+    extern esp_buffer
+    extern current_page_directory
 asm_out:
     push ebp
     mov ebp, esp
@@ -70,4 +86,74 @@ switch_page_directory:
 
     mov esp, ebp
     pop ebp
+    ret
+paging_physcpy:
+
+    push ebp
+    mov ebp, esp
+    push ebx
+    pushf
+    
+    mov ebx, [ebp + 8]
+    mov ecx, [ebp + 12]
+    mov edx, 1024
+    
+    mov eax, cr0
+    and eax, 0x7fffffff
+    mov cr0, eax
+
+    _paging_physcpy_loop:
+    mov eax, [ebx]
+    mov [ecx], eax
+    add ebx, 4
+    add ecx, 4
+    dec edx
+    jnz _paging_physcpy_loop
+    
+    mov eax, cr0
+    or eax, 0x80000000
+    mov cr0, eax
+    
+    popf
+    pop ebx
+    mov esp, ebp
+    pop ebp
+
+asm_get_eip:
+    mov eax, [esp]
+    ret
+asm_get_esp:
+    mov eax, esp
+    ret
+asm_get_ebp:
+    mov eax, ebp    
+    ret
+asm_multsk_switch:
+    add esp, 4
+    mov eax, [esp_buffer]
+    mov esp, eax
+    mov eax, [ebp_buffer]
+    mov ebp, eax
+    mov eax, [current_page_directory]
+    add eax, 0x1000
+    mov cr3, eax
+    mov eax, 0xffffffff
+    mov ecx, [eip_buffer]
+    jmp ecx
+asm_cli:
+    cli
+    ret
+asm_sti:
+    sti
+    ret
+asm_set_sps:
+    mov eax, [esp + 4]
+    mov ebx, [esp + 8]
+    pop ecx
+    mov ebp, eax
+    mov esp, ebx
+    jmp ecx
+asm_flush_TLB:
+    mov eax, cr3
+    mov cr3, eax
     ret

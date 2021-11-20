@@ -2,7 +2,7 @@
 
 #define VEC_INIT_CAP 4
 
-extern heap_t glb_heap;
+extern heap_t kernel_heap;
 
 void *vec_alloc(vec_t *vec, uint32_t size)
 {
@@ -21,7 +21,7 @@ vec_t vec_new_sh(uint32_t size, heap_t *heap)
 
 vec_t vec_new_s(uint32_t size)
 {
-    return vec_new_sh(size, &glb_heap);
+    return vec_new_sh(size, &kernel_heap);
 }
 
 vec_t vec_new_h(heap_t *heap)
@@ -31,7 +31,7 @@ vec_t vec_new_h(heap_t *heap)
 
 vec_t vec_new()
 {
-    return vec_new_sh(VEC_INIT_CAP, &glb_heap);
+    return vec_new_sh(VEC_INIT_CAP, &kernel_heap);
 }
 
 void vec_push(vec_t *vec, uint32_t val)

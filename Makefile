@@ -1,7 +1,8 @@
-CFLAGS = -m32 -nostdlib -fno-builtin -fno-stack-protector -Isrc \
+CFLAGS = -g -m32 -nostdlib -fno-builtin -fno-stack-protector -Isrc \
              -nostartfiles -nodefaultlibs -Wall -Wextra -Werror
-# -nostdinc
 OBJECTS =\
+	build/multsk.o \
+	build/kqueue.o \
 	build/util.o \
 	build/kutil.o \
 	build/vec.o \
@@ -26,7 +27,7 @@ build/kernel: ${OBJECTS} link.ld
 	cp $@ ./iso/boot/kernel
 
 build/%.o: src/%.s
-	nasm -f elf32 -o $@ $<
+	nasm -g -f elf32 -o $@ $<
 
 build/%.o: src/%.c
 	gcc ${CFLAGS} -c $< -o $@
@@ -45,3 +46,6 @@ build/kheaptest: src/kheap.c test/kheaptest.c src/ordlist.c
 
 test: build/kheaptest
 	./$<
+
+debug: build/os.iso
+	qemu-system-i386 -gdb tcp::1234 -cdrom $<

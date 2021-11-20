@@ -3,21 +3,21 @@
 #include <kstring.h>
 
 extern terminal_t glb_term;
-extern heap_t glb_heap;
+extern heap_t kernel_heap;
 
 void *kmalloc(uint32_t size)
 {
-    return heap_alloc(&glb_heap, size, 0);
+    return heap_alloc(&kernel_heap, size, 0);
 }
 
 void *kmalloc_a(uint32_t size)
 {
-    return heap_alloc(&glb_heap, size, 1);
+    return heap_alloc(&kernel_heap, size, 1);
 }
 
 void kfree(void *ptr)
 {
-    heap_free(&glb_heap, ptr);
+    heap_free(&kernel_heap, ptr);
 }
 
 void kpanic(const char *message)
