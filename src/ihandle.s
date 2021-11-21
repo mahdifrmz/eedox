@@ -9,7 +9,7 @@ section .data:
 
 %macro IRQ 1
     global each_irq_handler_%1
-    each_irq_handler_%1
+    each_irq_handler_%1:
         cli
         push    dword 0
         push    dword %1                    ; push the interrupt number

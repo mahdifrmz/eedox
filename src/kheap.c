@@ -1,5 +1,4 @@
 #include <kheap.h>
-#include <assert.h>
 #include <util.h>
 
 int8_t compare(void *a, void *b)

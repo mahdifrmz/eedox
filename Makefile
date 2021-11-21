@@ -1,5 +1,4 @@
-CFLAGS = -g -m32 -nostdlib -fno-builtin -fno-stack-protector -Isrc \
-             -nostartfiles -nodefaultlibs -Wall -Wextra -Werror
+CFLAGS = -g -Isrc -ffreestanding -Wall -Wextra -Werror
 OBJECTS =\
 	build/multsk.o \
 	build/kqueue.o \
@@ -30,7 +29,7 @@ build/%.o: src/%.s
 	nasm -g -f elf32 -o $@ $<
 
 build/%.o: src/%.c
-	gcc ${CFLAGS} -c $< -o $@
+	i686-elf-gcc ${CFLAGS} -c $< -o $@
 
 .PHONY qemu: build/os.iso
 	qemu-system-i386 -cdrom $<
