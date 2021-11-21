@@ -39,12 +39,6 @@ build/:
 
 clean:
 	rm -rf build
-
-build/kheaptest: src/kheap.c test/kheaptest.c src/ordlist.c
-	gcc -Wall -Werror -g -Isrc -m32 test/kheaptest.c src/ordlist.c src/kheap.c -o $@
-
-test: build/kheaptest
-	./$<
-
+	
 debug: build/os.iso
 	qemu-system-i386 -gdb tcp::1234 -cdrom $<
