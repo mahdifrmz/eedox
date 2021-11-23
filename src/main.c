@@ -12,10 +12,11 @@
 #include <kqueue.h>
 
 terminal_t glb_term;
-gdtrec glb_gdt_records[3];
+gdtrec glb_gdt_records[6];
 idtrec idt_records[256];
 heap_t kernel_heap;
 extern uint32_t end;
+tss_rec tss_entry;
 
 unsigned char kbchars[128] = {
     0, 27, '1', '2', '3', '4', '5', '6', '7', '8',    /* 9 */
@@ -125,6 +126,7 @@ void init_timer(uint32_t frequency)
 
 void move_stack(uint32_t new_address, uint32_t old_address, uint32_t size)
 {
+
     for (uint32_t i = new_address; i >= new_address - size; i -= 0x1000)
     {
         alloc_frame(get_page(i, 0, current_page_directory), 1, 0);
@@ -151,7 +153,7 @@ int kmain(uint32_t stack_address)
 {
     term_init(&glb_term);
     term_fg(&glb_term);
-    load_gdt_recs(glb_gdt_records);
+    load_gdt_recs(glb_gdt_records, &tss_entry);
     load_idt_recs(idt_records, interrupt_handler, irq_handler);
     heap_init(&kernel_heap, &end, 0x1004000, 0x4000, 1, 1);
     paging_init();

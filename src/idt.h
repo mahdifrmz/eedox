@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #define IDTARR_LEN 256
-#define GDTARR_LEN 3
+#define GDTARR_LEN 6
 
 typedef struct
 {

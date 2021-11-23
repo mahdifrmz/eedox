@@ -17,4 +17,5 @@ uint32_t asm_get_ebp();
 void asm_multsk_switch();
 void asm_set_sps(uint32_t ebp, uint32_t esp);
 void asm_flush_TLB();
+void asm_flush_tss();
 #endif

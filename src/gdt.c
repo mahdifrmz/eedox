@@ -1,35 +1,39 @@
 #include <gdt.h>
 #include <asm.h>
+#include <util.h>
 
-void load_gdt_recs(gdtrec *gdt_records)
+gdtrec create_gdt_rec(uint32_t base, uint32_t limit, uint8_t access, uint8_t flags)
 {
-    // null : 0x00
-    gdt_records[0].length = 0;
-    gdt_records[0].base_l = 0;
-    gdt_records[0].base_m = 0;
-    gdt_records[0].flags = 0;
-    gdt_records[0].fllen = 0;
-    gdt_records[0].base_h = 0;
+    gdtrec rec;
+    rec.base_h = base >> 24;
+    rec.base_m = (base >> 16) & 0xff;
+    rec.base_l = base & 0xffff;
+    rec.length = limit & 0xffff;
+    rec.access = access;
+    rec.fllen = (limit >> 16) & 0xf;
+    rec.fllen |= (flags & 0xf0);
+    return rec;
+}
 
-    // code : 0x08
-    gdt_records[1].length = 0xffff;
-    gdt_records[1].base_l = 0;
-    gdt_records[1].base_m = 0;
-    gdt_records[1].flags = 0b10011010;
-    gdt_records[1].fllen = 0b11001111;
-    gdt_records[1].base_h = 0;
-
-    // data : 0x10
-    gdt_records[2].length = 0xffff;
-    gdt_records[2].base_l = 0;
-    gdt_records[2].base_m = 0;
-    gdt_records[2].flags = 0b10010010;
-    gdt_records[2].fllen = 0b11001111;
-    gdt_records[2].base_h = 0;
+void load_gdt_recs(gdtrec *gdt_records, tss_rec *tss_entry)
+{
+    gdt_records[0] = create_gdt_rec(0, 0, 0, 0);                                                             // Null segment
+    gdt_records[1] = create_gdt_rec(0, 0xFFFFFFFF, 0x9A, 0xCF);                                              // Code segment
+    gdt_records[2] = create_gdt_rec(0, 0xFFFFFFFF, 0x92, 0xCF);                                              // Data segment
+    gdt_records[3] = create_gdt_rec(0, 0xFFFFFFFF, 0xFA, 0xCF);                                              // User mode code segment
+    gdt_records[4] = create_gdt_rec(0, 0xFFFFFFFF, 0xF2, 0xCF);                                              // User mode data segment
+    gdt_records[5] = create_gdt_rec((uint32_t)tss_entry, (uint32_t)tss_entry + sizeof(tss_rec), 0xE9, 0x00); // tss
 
     gdtarray arr;
     arr.ptr = gdt_records;
     arr.len = GDTARR_LEN * sizeof(gdtrec) - 1;
 
+    memset(tss_entry, 0, sizeof(tss_rec));
+    tss_entry->gs = tss_entry->es = tss_entry->ds = tss_entry->ss = tss_entry->fs = 0x10 | 0x3;
+    tss_entry->cs = 0x8 | 0x3;
+    tss_entry->ss0 = 0x10;
+    tss_entry->esp0 = 0;
+
     asm_lgdt(arr);
+    asm_flush_tss();
 }

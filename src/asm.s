@@ -17,6 +17,7 @@
     global asm_multsk_switch
     global asm_set_sps 
     global asm_flush_TLB
+    global asm_flush_tss
 
     extern eip_buffer
     extern ebp_buffer
@@ -156,4 +157,8 @@ asm_set_sps:
 asm_flush_TLB:
     mov eax, cr3
     mov cr3, eax
+    ret
+asm_flush_tss:
+    mov ax, 0x2b
+    ltr ax
     ret

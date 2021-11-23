@@ -11,6 +11,7 @@ typedef struct
     uint32_t esp;
     uint32_t ebp;
     page_directory_t *page_dir;
+    uint32_t kernel_stack;
 } task_t;
 
 extern uint8_t multsk_flag;
@@ -19,5 +20,6 @@ void multsk_switch();
 uint32_t multsk_fork();
 void multsk_init();
 uint32_t multk_getpid();
+void multsk_set_kernel_stack(uint32_t esp);
 
 #endif
