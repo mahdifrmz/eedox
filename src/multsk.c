@@ -36,7 +36,7 @@ void multsk_switch()
     }
 }
 
-void multsk_fork()
+uint32_t multsk_fork()
 {
     asm_cli();
     task_t *curtask = (task_t *)kqueue_peek(&rr_queue);
@@ -50,7 +50,9 @@ void multsk_fork()
         newtask->page_dir = page_directory_clone(curtask->page_dir);
         kqueue_push(&rr_queue, (uint32_t)newtask);
     }
+    uint32_t pid = multk_getpid();
     asm_sti();
+    return pid;
 }
 
 void multsk_init()
