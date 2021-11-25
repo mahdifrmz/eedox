@@ -93,17 +93,11 @@ void interrupt_handler(registers regs)
         const char *us = regs.err_code & 0x4 ? "user-mode " : "";       // Processor was in user-mode?
         const char *reserved = regs.err_code & 0x8 ? "reserved " : "";  // Overwritten CPU-reserved bits of page entry?
         const char *fetch = regs.err_code & 0x10 ? "fetch " : "";
-        kprintf("paging fault [%x] ( %s%s%s%s%s) ", asm_get_cr2(), present, rw, us, reserved, fetch);
-        while (1)
-        {
-        }
+        kpanic("paging fault [%x] ( %s%s%s%s%s) ", asm_get_cr2(), present, rw, us, reserved, fetch);
     }
     else if (regs.int_no == 13)
     {
-        kprintf("general protection fault( code = %x )\n", regs.err_code);
-        while (1)
-        {
-        }
+        kpanic("general protection fault ( code = %x )", regs.err_code);
     }
     else if (regs.int_no == 32)
     {
@@ -178,6 +172,6 @@ int kmain(uint32_t stack_address)
     asm_usermode();
     // multsk_fork();
     // uint32_t pid = multk_getpid();
-    // kprintf("hello from thread %u\n", pid);
+    // kprintf("hello from thread %u\n", 80800808);
     return 0;
 }

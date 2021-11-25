@@ -20,19 +20,9 @@ void kfree(void *ptr)
     heap_free(&kernel_heap, ptr);
 }
 
-void kpanic(const char *message)
+int32_t _kprintf(const char *message, va_list args)
 {
-    kprintf("PANIC! ( %s )", message);
-    while (1)
-    {
-    }
-}
-
-int32_t kprintf(const char *message, ...)
-{
-    va_list args;
     int32_t count = 0;
-    va_start(args, message);
     char local[PARTIAL_PRINT_BUFFER_SIZE + 16];
     int32_t index = 0;
     while ((uint32_t)index < strlen(message))
@@ -46,6 +36,27 @@ int32_t kprintf(const char *message, ...)
         count += strlen(local);
         term_print(&glb_term, local);
     }
+    return count;
+}
+
+int32_t kprintf(const char *message, ...)
+{
+    va_list args;
+    va_start(args, message);
+    uint32_t count = _kprintf(message, args);
     va_end(args);
     return count;
+}
+
+void kpanic(const char *message, ...)
+{
+    va_list args;
+    va_start(args, message);
+    kprintf("PANIC! ( ");
+    _kprintf(message, args);
+    kprintf(" )");
+    va_end(args);
+    while (1)
+    {
+    }
 }

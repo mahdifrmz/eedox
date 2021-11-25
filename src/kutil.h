@@ -5,7 +5,7 @@
 #include <kheap.h>
 #include <util.h>
 
-void kpanic(const char *message);
+void kpanic(const char *message, ...);
 
 void *kmalloc(uint32_t size);
 void *kmalloc_a(uint32_t size);
