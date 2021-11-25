@@ -88,7 +88,22 @@ void interrupt_handler(registers regs)
     }
     else if (regs.int_no == 14)
     {
-        kpanic("paging fault");
+        const char *present = !(regs.err_code & 0x1) ? "present " : ""; // Page not present
+        const char *rw = regs.err_code & 0x2 ? "read-only " : "";       // Write operation?
+        const char *us = regs.err_code & 0x4 ? "user-mode " : "";       // Processor was in user-mode?
+        const char *reserved = regs.err_code & 0x8 ? "reserved " : "";  // Overwritten CPU-reserved bits of page entry?
+        const char *fetch = regs.err_code & 0x10 ? "fetch " : "";
+        kprintf("paging fault [%x] ( %s%s%s%s%s) ", asm_get_cr2(), present, rw, us, reserved, fetch);
+        while (1)
+        {
+        }
+    }
+    else if (regs.int_no == 13)
+    {
+        kprintf("general protection fault( code = %x )\n", regs.err_code);
+        while (1)
+        {
+        }
     }
     else if (regs.int_no == 32)
     {
@@ -158,9 +173,11 @@ int kmain(uint32_t stack_address)
     heap_init(&kernel_heap, &end, 0x1004000, 0x4000, 1, 1);
     paging_init();
     move_stack(0xC0000000, stack_address, 0x2000);
-    multsk_init();
     init_timer(100);
-    multsk_fork();
-    kprintf("hello from thread %u\n", multk_getpid());
+    multsk_init();
+    asm_usermode();
+    // multsk_fork();
+    // uint32_t pid = multk_getpid();
+    // kprintf("hello from thread %u\n", pid);
     return 0;
 }

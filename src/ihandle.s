@@ -7,6 +7,8 @@ section .data:
     interrupt_handler dd 0x0 
     irq_handler dd 0x0
 
+section .text:
+
 %macro IRQ 1
     global each_irq_handler_%1
     each_irq_handler_%1:
@@ -43,7 +45,6 @@ common_interrupt_handler:
     mov es, ax
     mov fs, ax
     mov gs, ax
-    mov ss, ax
     
     call [interrupt_handler]
 
@@ -52,7 +53,6 @@ common_interrupt_handler:
     mov es, ax
     mov fs, ax
     mov gs, ax
-    mov ss, ax
 
     popa
     
@@ -90,7 +90,6 @@ common_irq_handler:
     mov es, ax
     mov fs, ax
     mov gs, ax
-    mov ss, ax
 
     call [irq_handler]
 
@@ -99,7 +98,6 @@ common_irq_handler:
     mov es, ax
     mov fs, ax
     mov gs, ax
-    mov ss, ax
 
     popa
     

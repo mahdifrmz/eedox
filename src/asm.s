@@ -10,7 +10,8 @@
 
     global switch_page_directory
     global paging_physcpy
-    
+    global asm_usermode
+
     global asm_get_eip
     global asm_get_ebp
     global asm_get_esp
@@ -18,6 +19,7 @@
     global asm_set_sps 
     global asm_flush_TLB
     global asm_flush_tss
+    global asm_get_cr2
 
     extern eip_buffer
     extern ebp_buffer
@@ -125,6 +127,7 @@ asm_get_eip:
     ret
 asm_get_esp:
     mov eax, esp
+    add eax, 0x4
     ret
 asm_get_ebp:
     mov eax, ebp    
@@ -161,4 +164,33 @@ asm_flush_TLB:
 asm_flush_tss:
     mov ax, 0x2b
     ltr ax
+    ret
+
+asm_usermode:
+    cli
+    mov ax, 0x23
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    mov eax, esp
+    push 0x23 ; stack segment
+    push eax  ; esp
+    pushf     ; flags
+
+    ; set int flag
+    pop eax        
+    or eax, 0x200
+    push eax
+
+    push 0x1b ;
+    lea eax, _multsk_usermode
+    push eax
+    iret
+    _multsk_usermode:
+    ret
+
+asm_get_cr2:
+    mov eax, cr2
     ret

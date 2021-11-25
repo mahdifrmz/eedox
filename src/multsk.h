@@ -20,6 +20,5 @@ void multsk_switch();
 uint32_t multsk_fork();
 void multsk_init();
 uint32_t multk_getpid();
-void multsk_set_kernel_stack(uint32_t esp);
 
 #endif

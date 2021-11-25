@@ -5,7 +5,7 @@ idtrec create_idt_rec(void *handler, igate_type type)
 {
     idtrec rec;
     rec.zero = 0;
-    rec.type_attr = type;
+    rec.type_attr = type | 0x60;
     rec.selector = 0x08;
     rec.offset_1 = (int)handler % (UINT16_MAX + 1);
     rec.offset_2 = (int)handler / (UINT16_MAX + 1);
@@ -14,25 +14,25 @@ idtrec create_idt_rec(void *handler, igate_type type)
 
 void load_idt_trap_recs(idtrec *idt_records)
 {
-    idt_records[0] = create_idt_rec(interrupt_handler_0, igate_type_trap);
-    idt_records[1] = create_idt_rec(interrupt_handler_1, igate_type_trap);
-    idt_records[2] = create_idt_rec(interrupt_handler_2, igate_type_trap);
-    idt_records[3] = create_idt_rec(interrupt_handler_3, igate_type_trap);
-    idt_records[4] = create_idt_rec(interrupt_handler_4, igate_type_trap);
-    idt_records[5] = create_idt_rec(interrupt_handler_5, igate_type_trap);
-    idt_records[6] = create_idt_rec(interrupt_handler_6, igate_type_trap);
-    idt_records[7] = create_idt_rec(interrupt_handler_7, igate_type_trap);
-    idt_records[8] = create_idt_rec(interrupt_handler_8, igate_type_trap);
-    idt_records[9] = create_idt_rec(interrupt_handler_9, igate_type_trap);
-    idt_records[10] = create_idt_rec(interrupt_handler_10, igate_type_trap);
-    idt_records[11] = create_idt_rec(interrupt_handler_11, igate_type_trap);
-    idt_records[12] = create_idt_rec(interrupt_handler_12, igate_type_trap);
-    idt_records[13] = create_idt_rec(interrupt_handler_13, igate_type_trap);
-    idt_records[14] = create_idt_rec(interrupt_handler_14, igate_type_trap);
-    idt_records[15] = create_idt_rec(interrupt_handler_15, igate_type_trap);
-    idt_records[16] = create_idt_rec(interrupt_handler_16, igate_type_trap);
-    idt_records[17] = create_idt_rec(interrupt_handler_17, igate_type_trap);
-    idt_records[18] = create_idt_rec(interrupt_handler_18, igate_type_trap);
+    idt_records[0] = create_idt_rec(interrupt_handler_0, igate_type_interrupt);
+    idt_records[1] = create_idt_rec(interrupt_handler_1, igate_type_interrupt);
+    idt_records[2] = create_idt_rec(interrupt_handler_2, igate_type_interrupt);
+    idt_records[3] = create_idt_rec(interrupt_handler_3, igate_type_interrupt);
+    idt_records[4] = create_idt_rec(interrupt_handler_4, igate_type_interrupt);
+    idt_records[5] = create_idt_rec(interrupt_handler_5, igate_type_interrupt);
+    idt_records[6] = create_idt_rec(interrupt_handler_6, igate_type_interrupt);
+    idt_records[7] = create_idt_rec(interrupt_handler_7, igate_type_interrupt);
+    idt_records[8] = create_idt_rec(interrupt_handler_8, igate_type_interrupt);
+    idt_records[9] = create_idt_rec(interrupt_handler_9, igate_type_interrupt);
+    idt_records[10] = create_idt_rec(interrupt_handler_10, igate_type_interrupt);
+    idt_records[11] = create_idt_rec(interrupt_handler_11, igate_type_interrupt);
+    idt_records[12] = create_idt_rec(interrupt_handler_12, igate_type_interrupt);
+    idt_records[13] = create_idt_rec(interrupt_handler_13, igate_type_interrupt);
+    idt_records[14] = create_idt_rec(interrupt_handler_14, igate_type_interrupt);
+    idt_records[15] = create_idt_rec(interrupt_handler_15, igate_type_interrupt);
+    idt_records[16] = create_idt_rec(interrupt_handler_16, igate_type_interrupt);
+    idt_records[17] = create_idt_rec(interrupt_handler_17, igate_type_interrupt);
+    idt_records[18] = create_idt_rec(interrupt_handler_18, igate_type_interrupt);
 }
 
 void load_idt_hardint_recs(idtrec *idt_records)
