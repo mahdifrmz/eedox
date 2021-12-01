@@ -1,6 +1,8 @@
     global loader                   ; the entry symbol for ELF
     global asm_lgdt
     global asm_lidt
+
+    extern kinit
     extern kmain
     
     MAGIC_NUMBER equ 0x1BADB002     ; define the magic number constant
@@ -9,7 +11,7 @@
                                     ; (magic number + checksum + flags should equal 0)
     SEG_CODE equ 0x08
     SEG_DATA equ 0x10
-    STACK_SIZE equ 0x3000
+    INITIAL_STACK_SIZE equ 0x2000
 
 [BITS 32]                       ; All instructions should be 32-bit.
 [GLOBAL mboot]                  ; Make 'mboot' accessible from C.
@@ -34,11 +36,13 @@ align 4                         ; the code must be 4 byte aligned
 
 section .text:                     ; Kernel entry point (initial EIP).
 loader:                         ; the loader label (defined as entry point in linker script)
-    mov esp, stack + STACK_SIZE
+    mov esp, initial_stack + INITIAL_STACK_SIZE
     mov ebp, esp
-    push esp
+    call kinit
+    mov esp, eax
+    mov ebp, esp
     call kmain
     jmp $
 
 section .bss:
-    stack resb STACK_SIZE
+    initial_stack resb INITIAL_STACK_SIZE

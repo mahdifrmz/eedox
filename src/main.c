@@ -133,32 +133,18 @@ void init_timer(uint32_t frequency)
     asm_out(0x40, h);
 }
 
-void move_stack(uint32_t new_address, uint32_t old_address, uint32_t size)
+uint32_t stack_init()
 {
-
-    for (uint32_t i = new_address; i >= new_address - size; i -= 0x1000)
+    uint32_t stack = 0xC0000000;
+    uint32_t stack_size = 0x2000;
+    for (uint32_t i = stack; i >= stack - stack_size; i -= 0x1000)
     {
         alloc_frame(get_page(i, 0, current_page_directory), 1, 0);
     }
-    asm_flush_TLB();
-    uint32_t offset = new_address - old_address;
-    uint32_t old_ebp = asm_get_ebp();
-    uint32_t old_esp = asm_get_esp();
-    uint32_t new_ebp = old_ebp + offset;
-    uint32_t new_esp = old_esp + offset;
-    memcpy((void *)new_esp, (void *)old_esp, old_address - old_esp);
-    for (uint32_t i = new_address; i > new_address - size; i -= 4)
-    {
-        uint32_t value = *(uint32_t *)i;
-        if (value <= old_address && value >= old_esp)
-        {
-            *(uint32_t *)i += offset;
-        }
-    }
-    asm_set_sps(new_ebp, new_esp);
+    return stack;
 }
 
-int kmain(uint32_t stack_address)
+uint32_t kinit()
 {
     term_init(&glb_term);
     term_fg(&glb_term);
@@ -166,12 +152,14 @@ int kmain(uint32_t stack_address)
     load_idt_recs(idt_records, interrupt_handler, irq_handler);
     heap_init(&kernel_heap, &end, 0x1004000, 0x4000, 1, 1);
     paging_init();
-    move_stack(0xC0000000, stack_address, 0x2000);
+    return stack_init();
+}
+
+void kmain()
+{
     init_timer(100);
     multsk_init();
+    multsk_fork();
     asm_usermode();
-    // multsk_fork();
-    // uint32_t pid = multk_getpid();
     // kprintf("hello from thread %u\n", 80800808);
-    return 0;
 }
