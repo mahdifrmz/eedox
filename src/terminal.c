@@ -14,10 +14,10 @@ void term_raw_putchar(int row, int col, char c, color fg, color bg)
 void term_raw_set_cursor(int row, int col)
 {
     unsigned short index = row * TERMCOLS + col;
-    asm_out(0x03d4, 14);
-    asm_out(0x03d5, index / 256);
-    asm_out(0x03d4, 15);
-    asm_out(0x03d5, index % 256);
+    asm_outb(0x03d4, 14);
+    asm_outb(0x03d5, index / 256);
+    asm_outb(0x03d4, 15);
+    asm_outb(0x03d5, index % 256);
 }
 
 void term_putchar(terminal_t *term, int row, int col, char c, color fg, color bg)

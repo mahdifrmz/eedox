@@ -1,8 +1,11 @@
     SEG_CODE equ 0x08
     SEG_DATA equ 0x10
 
-    global asm_out
-    global asm_in
+    global asm_outb
+    global asm_outw
+    global asm_inb
+    global asm_outsw
+    global asm_insw
     global asm_lgdt
     global asm_lidt
     global asm_cli
@@ -25,7 +28,7 @@
     extern ebp_buffer
     extern esp_buffer
     extern current_page_directory
-asm_out:
+asm_outb:
     push ebp
     mov ebp, esp
 
@@ -37,7 +40,19 @@ asm_out:
     pop ebp
     ret
 
-asm_in:
+asm_outw:
+    push ebp
+    mov ebp, esp
+
+    mov ax, [ebp + 12]    ; move the data to be sent into the al register
+    mov dx, [ebp + 8]    ; move the address of the I/O port into the dx register
+    out dx, ax           ; send the data to the I/O port
+
+    mov esp, ebp
+    pop ebp
+    ret
+
+asm_inb:
     push ebp
     mov ebp, esp
 
@@ -193,4 +208,34 @@ asm_usermode:
 
 asm_get_cr2:
     mov eax, cr2
+    ret
+
+asm_outsw:
+    push ebp
+    mov ebp, esp
+
+    mov dx, [ebp+8]   ; port
+    mov esi, [ebp+12] ; address
+    mov ecx, [ebp+16] ; count
+
+    cld
+    rep outsw
+
+    mov esp, ebp
+    pop ebp 
+    ret
+
+asm_insw:
+    push ebp
+    mov ebp, esp
+
+    mov dx, [ebp+8]   ; port
+    mov edi, [ebp+12] ; address
+    mov ecx, [ebp+16] ; count
+
+    cld
+    rep insw
+
+    mov esp, ebp
+    pop ebp 
     ret

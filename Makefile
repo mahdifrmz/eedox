@@ -16,10 +16,16 @@ OBJECTS =\
 	build/terminal.o \
 	build/gdt.o \
 	build/idt.o \
-	build/ihandle.o
+	build/ihandle.o \
+	build/ide.o
+	
+QEMU_FLAGS = -drive file=build/vdsk.img,format=raw,index=0,media=disk
 
-build/os.iso: build/ build/kernel
+build/os.iso: build/ build/kernel build/vdsk.img
 	grub-mkrescue -o $@ iso
+
+build/vdsk.img:
+	qemu-img create -fraw build/vdsk.img 16m
 
 build/kernel: ${OBJECTS} link.ld
 	ld -T link.ld -m elf_i386 ${OBJECTS} -o $@
@@ -32,7 +38,7 @@ build/%.o: src/%.c
 	i686-elf-gcc ${CFLAGS} -c $< -o $@
 
 .PHONY qemu: build/os.iso
-	qemu-system-i386 -cdrom $<
+	qemu-system-i386 ${QEMU_FLAGS} -cdrom $<
 
 build/:
 	mkdir -p build
@@ -41,4 +47,4 @@ clean:
 	rm -rf build
 	
 debug: build/os.iso
-	qemu-system-i386 -gdb tcp::1234 -cdrom $<
+	qemu-system-i386 ${QEMU_FLAGS} -gdb tcp::1234 -cdrom $<

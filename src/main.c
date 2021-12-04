@@ -10,6 +10,7 @@
 #include <vec.h>
 #include <multsk.h>
 #include <kqueue.h>
+#include <ide.h>
 
 terminal_t glb_term;
 gdtrec glb_gdt_records[6];
@@ -69,7 +70,7 @@ void interrupt_handler(registers regs)
 {
     if (regs.int_no == 33)
     {
-        uint8_t scancode = asm_in(0x60);
+        uint8_t scancode = asm_inb(0x60);
         if (scancode < 128)
         {
             char ch = kbchars[scancode];
@@ -106,6 +107,10 @@ void interrupt_handler(registers regs)
             multsk_switch();
         }
     }
+    else if (regs.int_no == 46)
+    {
+        ata_ihandler();
+    }
     else
     {
         kprintf("interrupt %u\n", regs.int_no);
@@ -116,9 +121,9 @@ void irq_handler(registers regs)
 {
     if (regs.int_no >= 8)
     {
-        asm_out(0xA0, 0x20);
+        asm_outb(0xA0, 0x20);
     }
-    asm_out(0x20, 0x20);
+    asm_outb(0x20, 0x20);
     regs.int_no += 32;
     interrupt_handler(regs);
 }
@@ -126,11 +131,11 @@ void irq_handler(registers regs)
 void init_timer(uint32_t frequency)
 {
     uint16_t divisor = 1193180 / frequency;
-    asm_out(0x43, 0x36);
+    asm_outb(0x43, 0x36);
     uint8_t l = (uint8_t)(divisor % 256);
     uint8_t h = (uint8_t)(divisor / 256);
-    asm_out(0x40, l);
-    asm_out(0x40, h);
+    asm_outb(0x40, l);
+    asm_outb(0x40, h);
 }
 
 uint32_t stack_init()
