@@ -80,6 +80,8 @@ common_interrupt_handler:
     NERR_INT_HANLDLER 17
     NERR_INT_HANLDLER 18
 
+    NERR_INT_HANLDLER 128
+
 common_irq_handler:
 
     pusha

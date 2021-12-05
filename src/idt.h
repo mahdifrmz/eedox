@@ -56,6 +56,8 @@ void interrupt_handler_16();
 void interrupt_handler_17();
 void interrupt_handler_18();
 
+void interrupt_handler_128();
+
 void each_irq_handler_0();
 void each_irq_handler_1();
 void each_irq_handler_2();

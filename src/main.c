@@ -111,6 +111,10 @@ void interrupt_handler(registers regs)
     {
         ata_ihandler();
     }
+    else if (regs.int_no == 0x80)
+    {
+        kprintf("user interrupt\n");
+    }
     else
     {
         kprintf("interrupt %u\n", regs.int_no);

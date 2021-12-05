@@ -33,6 +33,8 @@ void load_idt_trap_recs(idtrec *idt_records)
     idt_records[16] = create_idt_rec(interrupt_handler_16, igate_type_interrupt);
     idt_records[17] = create_idt_rec(interrupt_handler_17, igate_type_interrupt);
     idt_records[18] = create_idt_rec(interrupt_handler_18, igate_type_interrupt);
+
+    idt_records[0x80] = create_idt_rec(interrupt_handler_128, igate_type_interrupt);
 }
 
 void load_idt_hardint_recs(idtrec *idt_records)
