@@ -46,8 +46,6 @@
 #define ATA_CMD_IDENTIFY_PACKET 0xA1
 #define ATA_CMD_IDENTIFY 0xEC
 
-#define SECTOR_SIZE 512
-
 uint32_t ata_current_lba;
 void *ata_current_buffer;
 ata_op ata_current_op;

@@ -17,6 +17,7 @@ OBJECTS =\
 	build/gdt.o \
 	build/idt.o \
 	build/ihandle.o \
+	build/block.o \
 	build/ide.o
 	
 QEMU_FLAGS = -drive file=build/vdsk.img,format=raw,index=0,media=disk

@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define SECTOR_SIZE 512
+
 void ata_read(uint32_t sector, void *buffer);
 void ata_write(uint32_t sector, void *buffer);
 void ata_ihandler();
