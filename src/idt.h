@@ -28,6 +28,14 @@ typedef enum
     igate_type_task = 0x85,
 } igate_type;
 
+typedef struct
+{
+    uint32_t ds;                                     // Data segment selector
+    uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
+    uint32_t int_no, err_code;                       // Interrupt number and error code (if applicable)
+    uint32_t eip, cs, eflags, useresp, ss;           // Pushed by the processor automatically.
+} __attribute__((packed)) registers;
+
 idtrec create_idt_rec(void *handler, igate_type type);
 void load_idt_trap_recs(idtrec *idt_records);
 void load_idt_hardint_recs(idtrec *idt_records);

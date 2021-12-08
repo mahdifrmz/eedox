@@ -4,6 +4,8 @@
 
     extern kinit
     extern kmain
+
+    global user_write
     
     MAGIC_NUMBER equ 0x1BADB002     ; define the magic number constant
     FLAGS        equ 0x0            ; multiboot flags
@@ -43,6 +45,20 @@ loader:                         ; the loader label (defined as entry point in li
     mov ebp, esp
     call kmain
     jmp $
+
+user_write:
+    push ebp
+    mov ebp, esp
+
+    mov eax, 3
+    mov ebx, [ebp+8]
+    mov ecx, [ebp+12]
+    mov edx, [ebp+16]
+    int 0x80
+
+    mov esp, ebp
+    pop ebp 
+    ret
 
 section .bss:
     initial_stack resb INITIAL_STACK_SIZE

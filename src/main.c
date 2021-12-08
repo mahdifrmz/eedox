@@ -11,6 +11,7 @@
 #include <multsk.h>
 #include <kqueue.h>
 #include <ide.h>
+#include <syscall.h>
 
 terminal_t glb_term;
 gdtrec glb_gdt_records[6];
@@ -18,6 +19,8 @@ idtrec idt_records[256];
 heap_t kernel_heap;
 extern uint32_t end;
 tss_rec tss_entry;
+
+int32_t user_write(uint32_t fd, void *buffer, uint32_t length);
 
 unsigned char kbchars[128] = {
     0, 27, '1', '2', '3', '4', '5', '6', '7', '8',    /* 9 */
@@ -58,17 +61,9 @@ unsigned char kbchars[128] = {
     0, /* All other keys are undefined */
 };
 
-typedef struct
+void interrupt_handler(registers *regs)
 {
-    uint32_t ds;                                     // Data segment selector
-    uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
-    uint32_t int_no, err_code;                       // Interrupt number and error code (if applicable)
-    uint32_t eip, cs, eflags, useresp, ss;           // Pushed by the processor automatically.
-} __attribute__((packed)) registers;
-
-void interrupt_handler(registers regs)
-{
-    if (regs.int_no == 33)
+    if (regs->int_no == 33)
     {
         uint8_t scancode = asm_inb(0x60);
         if (scancode < 128)
@@ -87,48 +82,48 @@ void interrupt_handler(registers regs)
             }
         }
     }
-    else if (regs.int_no == 14)
+    else if (regs->int_no == 14)
     {
-        const char *present = !(regs.err_code & 0x1) ? "present " : ""; // Page not present
-        const char *rw = regs.err_code & 0x2 ? "read-only " : "";       // Write operation?
-        const char *us = regs.err_code & 0x4 ? "user-mode " : "";       // Processor was in user-mode?
-        const char *reserved = regs.err_code & 0x8 ? "reserved " : "";  // Overwritten CPU-reserved bits of page entry?
-        const char *fetch = regs.err_code & 0x10 ? "fetch " : "";
+        const char *present = !(regs->err_code & 0x1) ? "present " : ""; // Page not present
+        const char *rw = regs->err_code & 0x2 ? "read-only " : "";       // Write operation?
+        const char *us = regs->err_code & 0x4 ? "user-mode " : "";       // Processor was in user-mode?
+        const char *reserved = regs->err_code & 0x8 ? "reserved " : "";  // Overwritten CPU-reserved bits of page entry?
+        const char *fetch = regs->err_code & 0x10 ? "fetch " : "";
         kpanic("paging fault [%x] ( %s%s%s%s%s) ", asm_get_cr2(), present, rw, us, reserved, fetch);
     }
-    else if (regs.int_no == 13)
+    else if (regs->int_no == 13)
     {
-        kpanic("general protection fault ( code = %x )", regs.err_code);
+        kpanic("general protection fault ( code = %x )", regs->err_code);
     }
-    else if (regs.int_no == 32)
+    else if (regs->int_no == 32)
     {
         if (multsk_flag)
         {
             multsk_switch();
         }
     }
-    else if (regs.int_no == 46)
+    else if (regs->int_no == 46)
     {
         ata_ihandler();
     }
-    else if (regs.int_no == 0x80)
+    else if (regs->int_no == 0x80)
     {
-        kprintf("user interrupt\n");
+        syscall_handle(regs);
     }
     else
     {
-        kprintf("interrupt %u\n", regs.int_no);
+        kprintf("interrupt %u\n", regs->int_no);
     }
 }
 
-void irq_handler(registers regs)
+void irq_handler(registers *regs)
 {
-    if (regs.int_no >= 8)
+    if (regs->int_no >= 8)
     {
         asm_outb(0xA0, 0x20);
     }
     asm_outb(0x20, 0x20);
-    regs.int_no += 32;
+    regs->int_no += 32;
     interrupt_handler(regs);
 }
 
@@ -169,6 +164,16 @@ void kmain()
     init_timer(100);
     multsk_init();
     multsk_fork();
-    // asm_usermode();
+
+    char buffer[7];
+    memset(buffer, 0, 7);
+    strcpy(buffer, "salam\n");
+
+    asm_usermode();
+
+    while (1)
+    {
+        user_write(0, buffer, 6);
+    }
     // kprintf("I am %u\n", multk_getpid());
 }

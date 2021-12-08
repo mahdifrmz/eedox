@@ -46,7 +46,9 @@ common_interrupt_handler:
     mov fs, ax
     mov gs, ax
     
+    push esp
     call [interrupt_handler]
+    pop esp
 
     pop eax
     mov ds, ax
@@ -93,7 +95,9 @@ common_irq_handler:
     mov fs, ax
     mov gs, ax
 
+    push esp
     call [irq_handler]
+    pop esp
 
     pop eax
     mov ds, ax

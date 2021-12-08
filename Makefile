@@ -18,7 +18,8 @@ OBJECTS =\
 	build/idt.o \
 	build/ihandle.o \
 	build/block.o \
-	build/ide.o
+	build/ide.o \
+	build/syscall.o
 	
 QEMU_FLAGS = -drive file=build/vdsk.img,format=raw,index=0,media=disk
 
