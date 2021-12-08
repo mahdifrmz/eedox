@@ -62,6 +62,23 @@ uint32_t multsk_fork()
     return pid;
 }
 
+void multsk_awake(task_t *task)
+{
+    kqueue_push(&rr_queue, (uint32_t)task);
+}
+void multsk_yield()
+{
+    multsk_switch();
+}
+void multsk_sleep()
+{
+    kqueue_pop(&rr_queue);
+    multsk_yield();
+}
+task_t *multsk_curtask()
+{
+    return (task_t *)kqueue_peek(&rr_queue);
+}
 void multsk_init()
 {
     task_t *first = kmalloc(sizeof(task_t));

@@ -46,14 +46,14 @@ inode_t *inode_create(inode_type type, inode_t *parent, char *name)
     node->index = balloc(1);
     node->parent = parent->index;
     node->isvalid = 1;
-    // write
+    ata_write(node->index, node);
     inode_child_set(parent, 0, node->index);
     return node;
 }
 void inode_delete(inode_t *node, inode_t *parent)
 {
     node->isvalid = 0;
-    // write
+    ata_write(node->index, node);
     if (parent == NULL)
     {
         parent = inode_parent(node);
@@ -75,14 +75,15 @@ void inode_write(inode_t *node, uint32_t from, char *buffer, uint32_t count)
         node->size += op.bytes_overflow;
     }
     char *blocks = kmalloc(MAX_NODE_NAME_LENGTH * op.sec_count);
-    for (lba28_t i = 0; i < op.sec_count; i++)
+    uint32_t blocks_count = op.sec_count - op.sec_overflow;
+    for (lba28_t i = 0; i < blocks_count; i++)
     {
-        // read
+        ata_read(node->index + 1 + op.sec_from + i, blocks + i * SECTOR_SIZE);
     }
     memcpy(blocks + from, buffer, count);
-    for (lba28_t i = 0; i < op.sec_count; i++)
+    for (lba28_t i = 0; i < blocks_count; i++)
     {
-        // write
+        ata_write(node->index + 1 + op.sec_from + i, blocks + i * SECTOR_SIZE);
     }
     kfree(blocks);
 }
@@ -93,10 +94,11 @@ void inode_read(inode_t *node, uint32_t from, char *buffer, uint32_t count)
     op.bytes_count = count;
     inode_calculate_operation_bounds(node, &op);
 
-    char *blocks = kmalloc(MAX_NODE_NAME_LENGTH * op.sec_count - op.sec_overflow);
-    for (lba28_t i = 0; i < op.sec_count - op.sec_overflow; i++)
+    uint32_t blocks_count = op.sec_count - op.sec_overflow;
+    char *blocks = kmalloc(SECTOR_SIZE * blocks_count);
+    for (lba28_t i = 0; i < blocks_count; i++)
     {
-        // read
+        ata_read(node->index + 1 + op.sec_from + i, blocks + i * SECTOR_SIZE);
     }
     memcpy(buffer, blocks, count - op.bytes_overflow);
     buffer += (count - op.bytes_overflow);
@@ -110,12 +112,12 @@ inode_t *inode_children(inode_t *node)
 {
     uint32_t *children_indexes = kmalloc(node->alloc * SECTOR_SIZE);
     inode_read(node, 0, (char *)children_indexes, node->size);
-    inode_t *children = kmalloc(node->size / 4 * sizeof(inode_t));
+    char *children = kmalloc(node->size / 4 * SECTOR_SIZE);
     for (uint32_t i = 0; i < node->size; i++)
     {
-        inode_fetch(children_indexes[i], &children + i);
+        inode_fetch(children_indexes[i], (inode_t *)(children + i * SECTOR_SIZE));
     }
-    return children;
+    return (inode_t *)children;
 }
 void inode_child_set(inode_t *node, lba28_t rem, lba28_t add)
 {
@@ -171,8 +173,8 @@ void inode_child_set(inode_t *node, lba28_t rem, lba28_t add)
 }
 inode_t *inode_parent(inode_t *node)
 {
-    inode_t *parent = kmalloc(sizeof(inode_t));
-    inode_fetch(node->parent, &parent);
+    inode_t *parent = kmalloc(SECTOR_SIZE);
+    inode_fetch(node->parent, parent);
     return parent;
 }
 void inode_calculate_operation_bounds(inode_t *node, operation_bounds *operation)
@@ -208,7 +210,7 @@ void inode_realloc(inode_t *node, uint32_t sectors)
     node->index = new_index;
 }
 
-void inode_fetch(__attribute__((unused)) lba28_t index, __attribute__((unused)) inode_t **node)
+void inode_fetch(lba28_t index, inode_t *node)
 {
-    // read
+    ata_read(index, node);
 }

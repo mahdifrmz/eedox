@@ -20,5 +20,9 @@ void multsk_switch();
 uint32_t multsk_fork();
 void multsk_init();
 uint32_t multk_getpid();
+void multsk_awake(task_t *task);
+void multsk_yield();
+void multsk_sleep();
+task_t *multsk_curtask();
 
 #endif

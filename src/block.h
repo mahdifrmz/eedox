@@ -47,7 +47,7 @@ void inode_write(inode_t *node, uint32_t from, char *buffer, uint32_t count);
 void inode_read(inode_t *node, uint32_t from, char *buffer, uint32_t count);
 inode_t *inode_children(inode_t *node);
 void inode_child_set(inode_t *node, lba28_t rem, lba28_t add);
-void inode_fetch(lba28_t index, inode_t **parent);
+void inode_fetch(lba28_t index, inode_t *node);
 inode_t *inode_parent(inode_t *parent);
 void inode_calculate_operation_bounds(inode_t *node, operation_bounds *operation);
 void inode_realloc(inode_t *node, uint32_t sectors);

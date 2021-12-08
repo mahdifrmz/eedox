@@ -169,6 +169,6 @@ void kmain()
     init_timer(100);
     multsk_init();
     multsk_fork();
-    asm_usermode();
-    // kprintf("hello from thread %u\n", 80800808);
+    // asm_usermode();
+    // kprintf("I am %u\n", multk_getpid());
 }
