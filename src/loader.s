@@ -6,6 +6,8 @@
     extern kmain
 
     global user_write
+    global inldr_start
+    global inldr_end
     
     MAGIC_NUMBER equ 0x1BADB002     ; define the magic number constant
     FLAGS        equ 0x0            ; multiboot flags
@@ -45,7 +47,15 @@ loader:                         ; the loader label (defined as entry point in li
     mov ebp, esp
     call kmain
     jmp $
-
+inldr_start:
+    push 'zdrs'
+    mov eax, 3
+    mov ebx, 0
+    mov ecx, esp
+    mov edx, 4
+    int 0x80
+    jmp $
+inldr_end:
 user_write:
     push ebp
     mov ebp, esp

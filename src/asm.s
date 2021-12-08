@@ -189,6 +189,9 @@ asm_usermode:
     mov fs, ax
     mov gs, ax
 
+    pop ebx ; the return address (discarded)
+    pop ebx ; user program address
+
     mov eax, esp
     push 0x23 ; stack segment
     push eax  ; esp
@@ -200,11 +203,9 @@ asm_usermode:
     push eax
 
     push 0x1b ;
-    lea eax, _multsk_usermode
-    push eax
+    push ebx
+
     iret
-    _multsk_usermode:
-    ret
 
 asm_get_cr2:
     mov eax, cr2

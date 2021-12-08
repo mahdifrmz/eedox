@@ -20,7 +20,11 @@ heap_t kernel_heap;
 extern uint32_t end;
 tss_rec tss_entry;
 
+uint32_t kernel_memory_end;
 int32_t user_write(uint32_t fd, void *buffer, uint32_t length);
+
+extern uint32_t inldr_end;
+extern uint32_t inldr_start;
 
 unsigned char kbchars[128] = {
     0, 27, '1', '2', '3', '4', '5', '6', '7', '8',    /* 9 */
@@ -154,26 +158,34 @@ uint32_t kinit()
     term_fg(&glb_term);
     load_gdt_recs(glb_gdt_records, &tss_entry);
     load_idt_recs(idt_records, interrupt_handler, irq_handler);
-    heap_init(&kernel_heap, &end, 0x1004000, 0x4000, 1, 1);
+    uint32_t heap_effective_size = 0x1000000;
+    uint32_t heap_index_size = 0x4000;
+    uint32_t heap_total_size = heap_effective_size + heap_index_size;
+    heap_init(&kernel_heap, &end, heap_total_size, heap_index_size, 1, 1);
+    kernel_memory_end = (uint32_t)kernel_heap.start + heap_total_size;
+    uint32_t table_space = 0x400000;
+    if (kernel_memory_end % table_space != 0)
+    {
+        kernel_memory_end /= table_space;
+        kernel_memory_end *= table_space;
+        kernel_memory_end += table_space;
+    }
     paging_init();
     return stack_init();
+}
+
+void *load_indlr()
+{
+    alloc_frame(get_page(kernel_memory_end, 0, current_page_directory), 1, 0);
+    memcpy((void *)kernel_memory_end, &inldr_start, (uint32_t)&inldr_end - (uint32_t)&inldr_start);
+    return (void *)kernel_memory_end;
 }
 
 void kmain()
 {
     init_timer(100);
     multsk_init();
-    multsk_fork();
-
-    char buffer[7];
-    memset(buffer, 0, 7);
-    strcpy(buffer, "salam\n");
-
-    asm_usermode();
-
-    while (1)
-    {
-        user_write(0, buffer, 6);
-    }
+    // multsk_fork();
+    asm_usermode(load_indlr());
     // kprintf("I am %u\n", multk_getpid());
 }
