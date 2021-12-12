@@ -22,7 +22,7 @@ typedef struct
 
 extern uint8_t multsk_flag;
 
-void multsk_switch();
+void multsk_switch(uint32_t sleep);
 uint32_t multsk_fork();
 void multsk_init();
 uint32_t multk_getpid();

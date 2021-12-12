@@ -18,12 +18,12 @@ OBJECTS =\
 	build/gdt.o \
 	build/idt.o \
 	build/ihandle.o \
-	build/fs.o \
-	build/ide.o \
-	build/lock.o \
-	build/syscall.o \
-	build/swyld.o
-
+	build/syscall.o
+	
+	# build/fs.o
+	# build/ide.o
+	# build/lock.o 
+	
 USER_BINS =\
 	build/user/helloworld
 

@@ -30,6 +30,30 @@ void memset(void *dest, uint8_t val, uint32_t size)
     }
 }
 
+uint32_t min(uint32_t a, uint32_t b)
+{
+    if (a > b)
+    {
+        return b;
+    }
+    else
+    {
+        return a;
+    }
+}
+
+uint32_t max(uint32_t a, uint32_t b)
+{
+    if (a > b)
+    {
+        return a;
+    }
+    else
+    {
+        return b;
+    }
+}
+
 void memshift(void *dest, int32_t offset, uint32_t size)
 {
     if (!size)

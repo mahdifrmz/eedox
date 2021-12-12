@@ -20,7 +20,7 @@ uint32_t multk_getpid()
     return current_task->pid;
 }
 
-void multsk_switch()
+void multsk_switch(uint32_t sleep)
 {
     if (rr_queue.size == 1)
     {
@@ -32,7 +32,10 @@ void multsk_switch()
     curtask->eip = asm_get_eip();
     if (curtask->eip != 0xffffffff)
     {
-        kqueue_push(&rr_queue, (uint32_t)curtask);
+        if (!sleep)
+        {
+            kqueue_push(&rr_queue, (uint32_t)curtask);
+        }
         task_t *nextask = (task_t *)kqueue_peek(&rr_queue);
         eip_buffer = nextask->eip;
         ebp_buffer = nextask->ebp;
@@ -66,15 +69,7 @@ void multsk_awake(task_t *task)
 {
     kqueue_push(&rr_queue, (uint32_t)task);
 }
-// void multsk_yield()
-// {
-//     multsk_switch();
-// }
-// void multsk_sleep()
-// {
-//     kqueue_pop(&rr_queue);
-//     multsk_yield();
-// }
+
 task_t *multsk_curtask()
 {
     return (task_t *)kqueue_peek(&rr_queue);

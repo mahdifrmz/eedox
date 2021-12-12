@@ -23,4 +23,7 @@ int8_t strcmp(const char *str1, const char *str2);
 int32_t partial_print(char *buffer, int32_t index, const char *message, va_list args);
 int32_t sprintf(char *buffer, const char *message, ...);
 
+uint32_t min(uint32_t a, uint32_t b);
+uint32_t max(uint32_t a, uint32_t b);
+
 #endif

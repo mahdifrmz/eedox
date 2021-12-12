@@ -20,6 +20,10 @@ heap_t kernel_heap;
 extern uint32_t end;
 tss_rec tss_entry;
 
+kstring_t terminal_buffer;
+kstring_t input_buffer;
+task_t *reader_task;
+
 uint32_t kernel_memory_end;
 int32_t user_write(uint32_t fd, void *buffer, uint32_t length);
 
@@ -78,10 +82,18 @@ void interrupt_handler(registers *regs)
                 if (ch == '\b')
                 {
                     term_backspace(&glb_term);
+                    kstring_erase(&terminal_buffer, terminal_buffer.size - 1, 1);
                 }
                 else
                 {
                     term_write_char(&glb_term, ch);
+                    kstring_push(&terminal_buffer, ch);
+                    if (ch == '\n')
+                    {
+                        kstring_insert(&input_buffer, input_buffer.size, kstring_str(&terminal_buffer));
+                        kstring_clear(&terminal_buffer);
+                        multsk_awake(reader_task);
+                    }
                 }
             }
         }
@@ -103,7 +115,7 @@ void interrupt_handler(registers *regs)
     {
         if (multsk_flag)
         {
-            multsk_switch();
+            multsk_switch(0);
         }
     }
     else if (regs->int_no == 46)
@@ -164,6 +176,7 @@ void *load_indlr()
 
 void syscall_test()
 {
+    kprintf("salam\n");
 }
 
 void kinit()
@@ -184,6 +197,8 @@ void kinit()
         kernel_memory_end *= table_space;
         kernel_memory_end += table_space;
     }
+    input_buffer = kstring_new();
+    terminal_buffer = kstring_new();
     paging_init();
     stack_init();
 }
@@ -192,7 +207,11 @@ void kmain()
 {
     init_timer(100);
     multsk_init();
-    // multsk_fork();
+    uint32_t pid = multsk_fork();
+    if (!pid)
+    {
+        return;
+    }
     asm_usermode(load_indlr());
     // kprintf("I am %u\n", multk_getpid());
 }

@@ -23,11 +23,13 @@
     global asm_flush_TLB
     global asm_flush_tss
     global asm_get_cr2
+    global multsk_sleep
 
     extern eip_buffer
     extern ebp_buffer
     extern esp_buffer
     extern current_page_directory
+    extern multsk_switch
 asm_outb:
     push ebp
     mov ebp, esp
@@ -236,6 +238,22 @@ asm_insw:
 
     cld
     rep insw
+
+    mov esp, ebp
+    pop ebp 
+    ret
+
+multsk_sleep:
+    push ebp
+    mov ebp, esp
+
+    pusha
+    pushf
+    push 0x00000001
+    call multsk_switch
+    add esp, 4
+    popf
+    popa
 
     mov esp, ebp
     pop ebp 
