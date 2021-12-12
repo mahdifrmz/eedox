@@ -51,9 +51,9 @@ loader:                         ; the loader label (defined as entry point in li
     call kmain
     jmp $
 inldr_start:
-    ; mov eax, 10
-    ; int 0x80
-    ; push 'zdrs'
+    mov eax, 10
+    int 0x80
+    
     push 0
     push 0
     push "in: "

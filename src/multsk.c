@@ -48,7 +48,6 @@ void multsk_switch(uint32_t sleep)
 
 uint32_t multsk_fork()
 {
-    asm_cli();
     task_t *curtask = (task_t *)kqueue_peek(&rr_queue);
     task_t *newtask = kmalloc(sizeof(task_t));
     newtask->pid = task_count++;
@@ -61,7 +60,6 @@ uint32_t multsk_fork()
         kqueue_push(&rr_queue, (uint32_t)newtask);
     }
     uint32_t pid = multk_getpid();
-    asm_sti();
     return pid;
 }
 

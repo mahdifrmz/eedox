@@ -12,6 +12,8 @@
 #include <kqueue.h>
 // #include <ide.h>
 #include <syscall.h>
+#include <strbuf.h>
+#include <lock.h>
 
 terminal_t glb_term;
 gdtrec glb_gdt_records[6];
@@ -20,9 +22,12 @@ heap_t kernel_heap;
 extern uint32_t end;
 tss_rec tss_entry;
 
-kstring_t terminal_buffer;
-kstring_t input_buffer;
-task_t *reader_task;
+// kstring_t terminal_buffer;
+// kstring_t input_buffer;
+strbuf terminal_buffer;
+strbuf input_buffer;
+krwlock reader_lock;
+task_t *reader_task = NULL;
 
 uint32_t kernel_memory_end;
 int32_t user_write(uint32_t fd, void *buffer, uint32_t length);
@@ -81,18 +86,29 @@ void interrupt_handler(registers *regs)
             {
                 if (ch == '\b')
                 {
-                    term_backspace(&glb_term);
-                    kstring_erase(&terminal_buffer, terminal_buffer.size - 1, 1);
+                    if (terminal_buffer.size)
+                    {
+                        // kstring_erase(&terminal_buffer, terminal_buffer.size - 1, 1);
+                        term_backspace(&glb_term);
+                        strbuf_pop(&terminal_buffer);
+                    }
                 }
                 else
                 {
                     term_write_char(&glb_term, ch);
-                    kstring_push(&terminal_buffer, ch);
+                    // kstring_push(&terminal_buffer, ch);
+                    strbuf_push(&terminal_buffer, ch);
                     if (ch == '\n')
                     {
-                        kstring_insert(&input_buffer, input_buffer.size, kstring_str(&terminal_buffer));
-                        kstring_clear(&terminal_buffer);
-                        multsk_awake(reader_task);
+                        // kstring_insert(&input_buffer, input_buffer.size, kstring_str(&terminal_buffer));
+                        // kstring_clear(&terminal_buffer);
+                        strbuf_pushstr(&input_buffer, terminal_buffer.buffer, terminal_buffer.size);
+                        terminal_buffer.size = 0;
+                        if (reader_task && multsk_flag)
+                        {
+                            multsk_awake(reader_task);
+                            reader_task = NULL;
+                        }
                     }
                 }
             }
@@ -197,14 +213,15 @@ void kinit()
         kernel_memory_end *= table_space;
         kernel_memory_end += table_space;
     }
-    input_buffer = kstring_new();
-    terminal_buffer = kstring_new();
     paging_init();
     stack_init();
 }
 
 void kmain()
 {
+    strbuf_init(&terminal_buffer);
+    strbuf_init(&input_buffer);
+    krwlock_init(&reader_lock);
     init_timer(100);
     multsk_init();
     uint32_t pid = multsk_fork();
