@@ -12,7 +12,6 @@
 #include <kqueue.h>
 // #include <ide.h>
 #include <syscall.h>
-#include <strbuf.h>
 #include <lock.h>
 
 terminal_t glb_term;
@@ -22,10 +21,8 @@ heap_t kernel_heap;
 extern uint32_t end;
 tss_rec tss_entry;
 
-// kstring_t terminal_buffer;
-// kstring_t input_buffer;
-strbuf terminal_buffer;
-strbuf input_buffer;
+kstring_t terminal_buffer;
+kstring_t input_buffer;
 krwlock reader_lock;
 task_t *reader_task = NULL;
 
@@ -88,21 +85,18 @@ void interrupt_handler(registers *regs)
                 {
                     if (terminal_buffer.size)
                     {
-                        // kstring_erase(&terminal_buffer, terminal_buffer.size - 1, 1);
+                        kstring_erase(&terminal_buffer, terminal_buffer.size - 1, 1);
                         term_backspace(&glb_term);
-                        strbuf_pop(&terminal_buffer);
                     }
                 }
                 else
                 {
                     term_write_char(&glb_term, ch);
-                    // kstring_push(&terminal_buffer, ch);
-                    strbuf_push(&terminal_buffer, ch);
+                    kstring_push(&terminal_buffer, ch);
                     if (ch == '\n')
                     {
-                        // kstring_insert(&input_buffer, input_buffer.size, kstring_str(&terminal_buffer));
-                        // kstring_clear(&terminal_buffer);
-                        strbuf_pushstr(&input_buffer, terminal_buffer.buffer, terminal_buffer.size);
+                        kstring_insert(&input_buffer, input_buffer.size, kstring_str(&terminal_buffer));
+                        kstring_clear(&terminal_buffer);
                         terminal_buffer.size = 0;
                         if (reader_task && multsk_flag)
                         {
@@ -219,8 +213,8 @@ void kinit()
 
 void kmain()
 {
-    strbuf_init(&terminal_buffer);
-    strbuf_init(&input_buffer);
+    terminal_buffer = kstring_new();
+    input_buffer = kstring_new();
     krwlock_init(&reader_lock);
     init_timer(100);
     multsk_init();

@@ -1,17 +1,14 @@
 #include <syscall.h>
-// #include <lock.h>
 #include <terminal.h>
 #include <multsk.h>
 #include <kutil.h>
 #include <kstring.h>
-#include <strbuf.h>
 #include <lock.h>
 
 extern terminal_t glb_term;
-// extern kstring_t input_buffer;
 extern task_t *reader_task;
 extern krwlock reader_lock;
-extern strbuf input_buffer;
+extern kstring_t input_buffer;
 
 void syscall_test();
 
@@ -32,9 +29,8 @@ void syscall_handle(registers *regs)
         while (1)
         {
             uint32_t count = min(len, input_buffer.size);
-            // memcpy(buffer, kstring_str(&input_buffer), count);
-            // kstring_erase(&input_buffer, 0, count);
-            strbuf_popstr(&input_buffer, buffer, count);
+            memcpy(buffer, kstring_str(&input_buffer), count);
+            kstring_erase(&input_buffer, 0, count);
             len -= count;
             buffer += count;
             if (!len)

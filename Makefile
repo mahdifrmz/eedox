@@ -18,7 +18,6 @@ OBJECTS =\
 	build/gdt.o \
 	build/idt.o \
 	build/ihandle.o \
-	build/strbuf.o \
 	build/syscall.o \
 	build/lock.o
 	
