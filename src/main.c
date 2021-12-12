@@ -10,7 +10,7 @@
 #include <vec.h>
 #include <multsk.h>
 #include <kqueue.h>
-#include <ide.h>
+// #include <ide.h>
 #include <syscall.h>
 
 terminal_t glb_term;
@@ -108,7 +108,7 @@ void interrupt_handler(registers *regs)
     }
     else if (regs->int_no == 46)
     {
-        ata_ihandler();
+        // ata_ihandler();
     }
     else if (regs->int_no == 0x80)
     {
@@ -141,18 +141,32 @@ void init_timer(uint32_t frequency)
     asm_outb(0x40, h);
 }
 
-uint32_t stack_init()
+void stack_init()
 {
-    uint32_t stack = 0xC0000000;
-    uint32_t stack_size = 0x2000;
-    for (uint32_t i = stack; i >= stack - stack_size; i -= 0x1000)
+    kernel_stack_ptr = 0xC0000000;
+    user_stack_ptr = kernel_stack_ptr + KERNEL_STACK_SIZE;
+    for (uint32_t i = 0; i < KERNEL_STACK_SIZE; i += 0x1000)
     {
-        alloc_frame(get_page(i, 0, current_page_directory), 1, 0);
+        alloc_frame(get_page(kernel_stack_ptr + i, 0, current_page_directory), 1, 0);
     }
-    return stack;
+    for (uint32_t i = 0; i < USER_STACK_SIZE; i += 0x1000)
+    {
+        alloc_frame(get_page(user_stack_ptr + i, 0, current_page_directory), 1, 0);
+    }
 }
 
-uint32_t kinit()
+void *load_indlr()
+{
+    alloc_frame(get_page(kernel_memory_end, 0, current_page_directory), 1, 0);
+    memcpy((void *)kernel_memory_end, &inldr_start, (uint32_t)&inldr_end - (uint32_t)&inldr_start);
+    return (void *)kernel_memory_end;
+}
+
+void syscall_test()
+{
+}
+
+void kinit()
 {
     term_init(&glb_term);
     term_fg(&glb_term);
@@ -171,14 +185,7 @@ uint32_t kinit()
         kernel_memory_end += table_space;
     }
     paging_init();
-    return stack_init();
-}
-
-void *load_indlr()
-{
-    alloc_frame(get_page(kernel_memory_end, 0, current_page_directory), 1, 0);
-    memcpy((void *)kernel_memory_end, &inldr_start, (uint32_t)&inldr_end - (uint32_t)&inldr_start);
-    return (void *)kernel_memory_end;
+    stack_init();
 }
 
 void kmain()

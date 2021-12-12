@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include <paging.h>
 
+#define KERNEL_STACK_SIZE 0x2000
+#define USER_STACK_SIZE 0x2000
+
+extern uint32_t kernel_stack_ptr;
+extern uint32_t user_stack_ptr;
+
 typedef struct
 {
     uint32_t pid;

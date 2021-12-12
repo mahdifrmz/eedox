@@ -4,6 +4,7 @@
 
     extern kinit
     extern kmain
+    extern user_stack_ptr
 
     global user_write
     global inldr_start
@@ -16,6 +17,7 @@
     SEG_CODE equ 0x08
     SEG_DATA equ 0x10
     INITIAL_STACK_SIZE equ 0x2000
+    USER_STACK_SIZE equ 0x2000
 
 [BITS 32]                       ; All instructions should be 32-bit.
 [GLOBAL mboot]                  ; Make 'mboot' accessible from C.
@@ -43,11 +45,14 @@ loader:                         ; the loader label (defined as entry point in li
     mov esp, initial_stack + INITIAL_STACK_SIZE
     mov ebp, esp
     call kinit
-    mov esp, eax
+    mov esp, [user_stack_ptr]
+    add esp, USER_STACK_SIZE
     mov ebp, esp
     call kmain
     jmp $
 inldr_start:
+    mov eax, 10
+    int 0x80
     push 'zdrs'
     mov eax, 3
     mov ebx, 0

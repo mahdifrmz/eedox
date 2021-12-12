@@ -2,6 +2,10 @@
 
 void memcpy(void *dest, const void *src, uint32_t size)
 {
+    if (!size)
+    {
+        return;
+    }
     if (dest < src)
     {
         for (int64_t i = 0; i < size; i++)
@@ -28,6 +32,10 @@ void memset(void *dest, uint8_t val, uint32_t size)
 
 void memshift(void *dest, int32_t offset, uint32_t size)
 {
+    if (!size)
+    {
+        return;
+    }
     if (offset > 0)
     {
         for (int64_t i = size - 1; i >= 0; i--)

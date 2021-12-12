@@ -12,6 +12,8 @@ extern tss_rec tss_entry;
 uint8_t multsk_flag = 0;
 uint32_t task_count = 0;
 task_t *current_task;
+uint32_t kernel_stack_ptr;
+uint32_t user_stack_ptr;
 
 uint32_t multk_getpid()
 {
@@ -37,7 +39,6 @@ void multsk_switch()
         esp_buffer = nextask->esp;
         current_task = nextask;
         current_page_directory = current_task->page_dir;
-        tss_entry.esp0 = current_task->kernel_stack + KERNEL_STACK_SIZE;
         asm_multsk_switch();
     }
 }
@@ -47,7 +48,6 @@ uint32_t multsk_fork()
     asm_cli();
     task_t *curtask = (task_t *)kqueue_peek(&rr_queue);
     task_t *newtask = kmalloc(sizeof(task_t));
-    newtask->kernel_stack = (uint32_t)kmalloc_a(KERNEL_STACK_SIZE);
     newtask->pid = task_count++;
     newtask->ebp = asm_get_ebp();
     newtask->esp = asm_get_esp();
@@ -66,15 +66,15 @@ void multsk_awake(task_t *task)
 {
     kqueue_push(&rr_queue, (uint32_t)task);
 }
-void multsk_yield()
-{
-    multsk_switch();
-}
-void multsk_sleep()
-{
-    kqueue_pop(&rr_queue);
-    multsk_yield();
-}
+// void multsk_yield()
+// {
+//     multsk_switch();
+// }
+// void multsk_sleep()
+// {
+//     kqueue_pop(&rr_queue);
+//     multsk_yield();
+// }
 task_t *multsk_curtask()
 {
     return (task_t *)kqueue_peek(&rr_queue);
@@ -88,6 +88,6 @@ void multsk_init()
     rr_queue = kqueue_new();
     kqueue_push(&rr_queue, (uint32_t)first);
     current_task = first;
-    tss_entry.esp0 = current_task->kernel_stack + KERNEL_STACK_SIZE;
+    tss_entry.esp0 = kernel_stack_ptr + KERNEL_STACK_SIZE;
     multsk_flag = 1;
 }

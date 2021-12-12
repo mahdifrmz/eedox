@@ -1,4 +1,4 @@
 target remote tcp:localhost:1234
 symbol-file build/kernel
-b kmain
+b src/main.c:177
 c
