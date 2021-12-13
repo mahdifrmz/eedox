@@ -19,7 +19,8 @@ OBJECTS =\
 	build/idt.o \
 	build/ihandle.o \
 	build/syscall.o \
-	build/lock.o
+	build/lock.o \
+	build/kb.o
 	
 	# build/fs.o
 	# build/ide.o

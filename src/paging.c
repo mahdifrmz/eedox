@@ -3,6 +3,7 @@
 #include <bitset.h>
 #include <kutil.h>
 #include <asm.h>
+#include <idt.h>
 
 extern heap_t kernel_heap;
 bitset_t glb_frames;
@@ -83,6 +84,8 @@ void paging_init()
     kernel_page_directory->physical = (uint32_t)kernel_page_directory->tables_physical;
     current_page_directory = page_directory_clone(kernel_page_directory);
     switch_page_directory((page_table_t **)current_page_directory->physical);
+
+    load_int_handler(INTCODE_PAGEFAULT, page_fault);
 }
 
 page_directory_t *page_directory_clone(page_directory_t *dir)
@@ -127,4 +130,14 @@ page_table_t *page_table_clone(page_table_t *table)
     }
 
     return new_table;
+}
+
+void page_fault(registers *regs)
+{
+    const char *present = !(regs->err_code & 0x1) ? "present " : ""; // Page not present
+    const char *rw = regs->err_code & 0x2 ? "read-only " : "";       // Write operation?
+    const char *us = regs->err_code & 0x4 ? "user-mode " : "";       // Processor was in user-mode?
+    const char *reserved = regs->err_code & 0x8 ? "reserved " : "";  // Overwritten CPU-reserved bits of page entry?
+    const char *fetch = regs->err_code & 0x10 ? "fetch " : "";
+    kpanic("paging fault [%x] ( %s%s%s%s%s) ", asm_get_cr2(), present, rw, us, reserved, fetch);
 }

@@ -83,4 +83,10 @@ void multsk_init()
     current_task = first;
     tss_entry.esp0 = kernel_stack_ptr + KERNEL_STACK_SIZE;
     multsk_flag = 1;
+    load_int_handler(INTCODE_PIC, multsk_timer);
+}
+
+void multsk_timer(__attribute__((unused)) registers *regs)
+{
+    multsk_switch(0);
 }

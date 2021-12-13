@@ -10,5 +10,6 @@
 
 void syscall_handle(registers *regs);
 void syscall_test();
+void syscall_init();
 
 #endif

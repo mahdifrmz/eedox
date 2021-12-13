@@ -6,6 +6,12 @@
 #define IDTARR_LEN 256
 #define GDTARR_LEN 6
 
+#define INTCODE_GPF 13
+#define INTCODE_PAGEFAULT 14
+#define INTCODE_PIC 32
+#define INTCODE_KEYBOARD 33
+#define INTCODE_SYSCALL 0x80
+
 typedef struct
 {
     uint16_t offset_1; // offset bits 0..15
@@ -36,13 +42,18 @@ typedef struct
     uint32_t eip, cs, eflags, useresp, ss;           // Pushed by the processor automatically.
 } __attribute__((packed)) registers;
 
+typedef void (*int_handler_t)(registers *regs);
+
 idtrec create_idt_rec(void *handler, igate_type type);
 void load_idt_trap_recs(idtrec *idt_records);
 void load_idt_hardint_recs(idtrec *idt_records);
 void remap_PICs();
-void load_idt_recs(idtrec *idt_records, void *int_handler, void *irq_handler);
+void load_idt_recs(int_handler_t common_handler);
 void set_interrupt_handler(void *handler);
 void set_irq_handler(void *handler);
+void interrupt_handler(registers *regs);
+void irq_handler(registers *regs);
+void load_int_handler(uint8_t code, int_handler_t handler);
 
 void interrupt_handler_0();
 void interrupt_handler_1();

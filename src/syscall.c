@@ -4,11 +4,7 @@
 #include <kutil.h>
 #include <kstring.h>
 #include <lock.h>
-
-extern terminal_t glb_term;
-extern task_t *reader_task;
-extern krwlock reader_lock;
-extern kstring_t input_buffer;
+#include <kb.h>
 
 void syscall_test();
 
@@ -51,4 +47,9 @@ void syscall_handle(registers *regs)
     {
         syscall_test();
     }
+}
+
+void syscall_init()
+{
+    load_int_handler(INTCODE_SYSCALL, syscall_handle);
 }

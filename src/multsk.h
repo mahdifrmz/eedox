@@ -30,5 +30,6 @@ void multsk_awake(task_t *task);
 void multsk_yield();
 void multsk_sleep();
 task_t *multsk_curtask();
+void multsk_timer(registers *regs);
 
 #endif

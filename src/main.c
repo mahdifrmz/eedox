@@ -13,18 +13,13 @@
 // #include <ide.h>
 #include <syscall.h>
 #include <lock.h>
+#include <kb.h>
 
 terminal_t glb_term;
 gdtrec glb_gdt_records[6];
-idtrec idt_records[256];
 heap_t kernel_heap;
 extern uint32_t end;
 tss_rec tss_entry;
-
-kstring_t terminal_buffer;
-kstring_t input_buffer;
-krwlock reader_lock;
-task_t *reader_task = NULL;
 
 uint32_t kernel_memory_end;
 int32_t user_write(uint32_t fd, void *buffer, uint32_t length);
@@ -32,128 +27,7 @@ int32_t user_write(uint32_t fd, void *buffer, uint32_t length);
 extern uint32_t inldr_end;
 extern uint32_t inldr_start;
 
-unsigned char kbchars[128] = {
-    0, 27, '1', '2', '3', '4', '5', '6', '7', '8',    /* 9 */
-    '9', '0', '-', '=', '\b',                         /* Backspace */
-    0,                                                /* Tab */
-    'q', 'w', 'e', 'r',                               /* 19 */
-    't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',     /* Enter key */
-    0,                                                /* 29   - Control */
-    'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', /* 39 */
-    '\'', '`', 0,                                     /* Left shift */
-    '\\', 'z', 'x', 'c', 'v', 'b', 'n',               /* 49 */
-    'm', ',', '.', '/', 0,                            /* Right shift */
-    '*',
-    0,   /* Alt */
-    ' ', /* Space bar */
-    0,   /* Caps lock */
-    0,   /* 59 - F1 key ... > */
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, /* < ... F10 */
-    0, /* 69 - Num lock*/
-    0, /* Scroll Lock */
-    0, /* Home key */
-    0, /* Up Arrow */
-    0, /* Page Up */
-    '-',
-    0, /* Left Arrow */
-    0,
-    0, /* Right Arrow */
-    '+',
-    0, /* 79 - End key*/
-    0, /* Down Arrow */
-    0, /* Page Down */
-    0, /* Insert Key */
-    0, /* Delete Key */
-    0, 0, 0,
-    0, /* F11 Key */
-    0, /* F12 Key */
-    0, /* All other keys are undefined */
-};
-
-void interrupt_handler(registers *regs)
-{
-    if (regs->int_no == 33)
-    {
-        uint8_t scancode = asm_inb(0x60);
-        if (scancode < 128)
-        {
-            char ch = kbchars[scancode];
-            if (ch != 0)
-            {
-                if (ch == '\b')
-                {
-                    if (terminal_buffer.size)
-                    {
-                        kstring_erase(&terminal_buffer, terminal_buffer.size - 1, 1);
-                        term_backspace(&glb_term);
-                    }
-                }
-                else
-                {
-                    term_write_char(&glb_term, ch);
-                    kstring_push(&terminal_buffer, ch);
-                    if (ch == '\n')
-                    {
-                        kstring_insert(&input_buffer, input_buffer.size, kstring_str(&terminal_buffer));
-                        kstring_clear(&terminal_buffer);
-                        terminal_buffer.size = 0;
-                        if (reader_task && multsk_flag)
-                        {
-                            multsk_awake(reader_task);
-                            reader_task = NULL;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    else if (regs->int_no == 14)
-    {
-        const char *present = !(regs->err_code & 0x1) ? "present " : ""; // Page not present
-        const char *rw = regs->err_code & 0x2 ? "read-only " : "";       // Write operation?
-        const char *us = regs->err_code & 0x4 ? "user-mode " : "";       // Processor was in user-mode?
-        const char *reserved = regs->err_code & 0x8 ? "reserved " : "";  // Overwritten CPU-reserved bits of page entry?
-        const char *fetch = regs->err_code & 0x10 ? "fetch " : "";
-        kpanic("paging fault [%x] ( %s%s%s%s%s) ", asm_get_cr2(), present, rw, us, reserved, fetch);
-    }
-    else if (regs->int_no == 13)
-    {
-        kpanic("general protection fault ( code = %x )", regs->err_code);
-    }
-    else if (regs->int_no == 32)
-    {
-        if (multsk_flag)
-        {
-            multsk_switch(0);
-        }
-    }
-    else if (regs->int_no == 46)
-    {
-        // ata_ihandler();
-    }
-    else if (regs->int_no == 0x80)
-    {
-        syscall_handle(regs);
-    }
-    else
-    {
-        kprintf("interrupt %u\n", regs->int_no);
-    }
-}
-
-void irq_handler(registers *regs)
-{
-    if (regs->int_no >= 8)
-    {
-        asm_outb(0xA0, 0x20);
-    }
-    asm_outb(0x20, 0x20);
-    regs->int_no += 32;
-    interrupt_handler(regs);
-}
-
-void init_timer(uint32_t frequency)
+void timer_init(uint32_t frequency)
 {
     uint16_t divisor = 1193180 / frequency;
     asm_outb(0x43, 0x36);
@@ -189,12 +63,25 @@ void syscall_test()
     kprintf("salam\n");
 }
 
+void GPF_handler(registers *regs)
+{
+    kpanic("general protection fault ( code = %x )", regs->err_code);
+}
+
+void common_int_handler(registers *regs)
+{
+    if (regs->int_no != INTCODE_PIC)
+    {
+        kprintf("interrupt %u\n", regs->int_no);
+    }
+}
+
 void kinit()
 {
     term_init(&glb_term);
     term_fg(&glb_term);
     load_gdt_recs(glb_gdt_records, &tss_entry);
-    load_idt_recs(idt_records, interrupt_handler, irq_handler);
+    load_idt_recs(common_int_handler);
     uint32_t heap_effective_size = 0x1000000;
     uint32_t heap_index_size = 0x4000;
     uint32_t heap_total_size = heap_effective_size + heap_index_size;
@@ -213,16 +100,16 @@ void kinit()
 
 void kmain()
 {
-    terminal_buffer = kstring_new();
-    input_buffer = kstring_new();
-    krwlock_init(&reader_lock);
-    init_timer(100);
+    kprintf("Kernel initialized successfully\n");
+    timer_init(100);
+    keyboard_init();
+    syscall_init();
     multsk_init();
+
     uint32_t pid = multsk_fork();
     if (!pid)
     {
         return;
     }
     asm_usermode(load_indlr());
-    // kprintf("I am %u\n", multk_getpid());
 }

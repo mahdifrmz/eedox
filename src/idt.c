@@ -1,5 +1,10 @@
 #include <idt.h>
 #include <asm.h>
+#include <util.h>
+
+idtrec idt_records[256];
+int_handler_t int_handlers[256];
+int_handler_t int_handler_common;
 
 idtrec create_idt_rec(void *handler, igate_type type)
 {
@@ -71,9 +76,20 @@ void remap_PICs()
     asm_outb(0xA1, 0x0);
 }
 
-void load_idt_recs(idtrec *idt_records, void *int_handler, void *irq_handler)
+void irq_handler(registers *regs)
 {
-    set_interrupt_handler(int_handler);
+    if (regs->int_no >= 8)
+    {
+        asm_outb(0xA0, 0x20);
+    }
+    asm_outb(0x20, 0x20);
+    regs->int_no += 32;
+    interrupt_handler(regs);
+}
+
+void load_idt_recs(int_handler_t common_handler)
+{
+    set_interrupt_handler(interrupt_handler);
     set_irq_handler(irq_handler);
     load_idt_trap_recs(idt_records);
     load_idt_hardint_recs(idt_records);
@@ -83,5 +99,23 @@ void load_idt_recs(idtrec *idt_records, void *int_handler, void *irq_handler)
     arr.ptr = idt_records;
     arr.len = IDTARR_LEN * sizeof(idtrec) - 1;
 
+    memset(int_handlers, 0, 256 * sizeof(int_handler_t));
+    int_handler_common = common_handler;
+
     asm_lidt(arr);
+}
+
+void load_int_handler(uint8_t code, int_handler_t handler)
+{
+    int_handlers[code] = handler;
+}
+
+void interrupt_handler(registers *regs)
+{
+    int_handler_t handler = int_handlers[regs->int_no];
+    if (!handler)
+    {
+        handler = int_handler_common;
+    }
+    handler(regs);
 }
