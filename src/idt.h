@@ -10,6 +10,7 @@
 #define INTCODE_PAGEFAULT 14
 #define INTCODE_PIC 32
 #define INTCODE_KEYBOARD 33
+#define INTCODE_ATA 46
 #define INTCODE_SYSCALL 0x80
 
 typedef struct

@@ -20,7 +20,8 @@ OBJECTS =\
 	build/ihandle.o \
 	build/syscall.o \
 	build/lock.o \
-	build/kb.o
+	build/kb.o \
+	build/ata.o
 	
 	# build/fs.o
 	# build/ide.o
@@ -38,26 +39,23 @@ STDLIB_SRC=\
 
 QEMU_FLAGS = -drive file=build/vdsk.img,format=raw,index=0,media=disk
 
-build/os.iso: build/ build/kernel build/vdsk.img
+build/os.iso: build/kernel build/vdsk.img
 	grub-mkrescue -o $@ iso
 
 build/vdsk.img: ${USER_BINS}
 	qemu-img create -fraw build/vdsk.img 16m
 
-build/user/inldr:
-	nasm -f bin -o build/user/inldr
-
 build/kernel: ${OBJECTS} link.ld
 	ld -T link.ld -m elf_i386 ${OBJECTS} -o $@
 	cp $@ ./iso/boot/kernel
 
-build/user/libstd.a: build/user ${STDLIB_SRC}
+build/user/libstd.a: ${STDLIB_SRC}
 	i686-elf-gcc ${CUSERFLAGS} -c user/stdlib.c -o build/user/stdlib.o 
 	i686-elf-gcc ${CFLAGS} -c src/util.c -o build/user/util.o
 	nasm -f elf32 -o build/user/asmlib.o user/asmlib.s
 	ar rcs build/user/libstd.a build/user/asmlib.o build/user/stdlib.o build/user/util.o
 
-build/user/%: user/%.c build/user build/user/libstd.a
+build/user/%: user/%.c build/user/libstd.a
 	i686-elf-gcc ${CUSERFLAGS} -c $< -o $@.o
 	ld -m elf_i386 --entry=main -o $@ $@.o -Lbuild/user -lstd
 
@@ -78,6 +76,8 @@ build/user:
 
 clean:
 	rm -rf build
+	mkdir build
+	mkdir build/user
 	
 debug: build/os.iso
 	qemu-system-i386 ${QEMU_FLAGS} -gdb tcp::1234 -cdrom $<

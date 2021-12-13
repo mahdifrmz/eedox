@@ -20,7 +20,10 @@ void ksemaphore_wait(ksemaphore_t *sem)
 void ksemaphore_signal(ksemaphore_t *sem)
 {
     sem->value++;
-    multsk_awake((task_t *)kqueue_pop(&sem->sq));
+    if (sem->sq.size)
+    {
+        multsk_awake((task_t *)kqueue_pop(&sem->sq));
+    }
 }
 
 void krwlock_read(krwlock *lock)

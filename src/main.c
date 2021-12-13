@@ -10,7 +10,7 @@
 #include <vec.h>
 #include <multsk.h>
 #include <kqueue.h>
-// #include <ide.h>
+#include <ata.h>
 #include <syscall.h>
 #include <lock.h>
 #include <kb.h>
@@ -58,11 +58,6 @@ void *load_indlr()
     return (void *)kernel_memory_end;
 }
 
-void syscall_test()
-{
-    kprintf("salam\n");
-}
-
 void GPF_handler(registers *regs)
 {
     kpanic("general protection fault ( code = %x )", regs->err_code);
@@ -98,6 +93,15 @@ void kinit()
     stack_init();
 }
 
+void syscall_test()
+{
+    char *buffer = kmalloc(SECTOR_SIZE);
+    memset(buffer, 0, SECTOR_SIZE);
+    ata_read(0, buffer);
+    ata_write(0, buffer);
+    kprintf(buffer);
+}
+
 void kmain()
 {
     kprintf("Kernel initialized successfully\n");
@@ -105,6 +109,8 @@ void kmain()
     keyboard_init();
     syscall_init();
     multsk_init();
+    ata_init();
+    load_int_handler(INTCODE_GPF, GPF_handler);
 
     uint32_t pid = multsk_fork();
     if (!pid)
