@@ -10,7 +10,7 @@
 #include <vec.h>
 #include <multsk.h>
 #include <kqueue.h>
-#include <ata.h>
+#include <fs.h>
 #include <syscall.h>
 #include <lock.h>
 #include <kb.h>
@@ -73,6 +73,7 @@ void common_int_handler(registers *regs)
 
 void kinit()
 {
+    // the order of these calls should'nt be randomly changed
     term_init(&glb_term);
     term_fg(&glb_term);
     load_gdt_recs(glb_gdt_records, &tss_entry);
@@ -95,21 +96,18 @@ void kinit()
 
 void syscall_test()
 {
-    char *buffer = kmalloc(SECTOR_SIZE);
-    memset(buffer, 0, SECTOR_SIZE);
-    ata_read(0, buffer);
-    ata_write(0, buffer);
-    kprintf(buffer);
+    uint32_t lba = balloc(4 + multk_getpid());
+    kprintf("lba=%u\n", lba);
 }
 
 void kmain()
 {
+    // the order of these calls should'nt be randomly changed
     kprintf("Kernel initialized successfully\n");
     timer_init(100);
     keyboard_init();
     syscall_init();
     multsk_init();
-    ata_init();
     load_int_handler(INTCODE_GPF, GPF_handler);
 
     uint32_t pid = multsk_fork();
@@ -117,5 +115,8 @@ void kmain()
     {
         return;
     }
+
+    fs_init();
+
     asm_usermode(load_indlr());
 }

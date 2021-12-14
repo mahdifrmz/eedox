@@ -23,8 +23,7 @@ OBJECTS =\
 	build/kb.o \
 	build/ata.o \
 	build/pathbuf.o \
-	
-	# build/fs.o
+	build/fs.o
 	
 	# build/fs.o
 	# build/ide.o
@@ -81,6 +80,8 @@ clean:
 	rm -rf build
 	mkdir build
 	mkdir build/user
-	
+img-reset:
+	dd of=build/vdsk.img count=16k bs=1k if=/dev/zero
+
 debug: build/os.iso
 	qemu-system-i386 ${QEMU_FLAGS} -gdb tcp::1234 -cdrom $<
