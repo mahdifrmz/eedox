@@ -28,7 +28,8 @@ void ksemaphore_signal(ksemaphore_t *sem)
 
 void krwlock_read(krwlock *lock)
 {
-    if (lock->operation == KRWLOCK_WRITE)
+    if (lock->operation == KRWLOCK_WRITE ||
+        (lock->operation == KRWLOCK_READ && lock->opq.size && kqueue_peek(&lock->opq) == KRWLOCK_WRITE))
     {
         kqueue_push(&lock->procq, (uint32_t)multsk_curtask());
         kqueue_push(&lock->opq, KRWLOCK_READ);
@@ -61,14 +62,25 @@ void krwlock_init(krwlock *lock)
 }
 void krwlock_release(krwlock *lock)
 {
+    uint8_t flag = 0;
     if (lock->readers)
     {
-        lock->readers--;
+        if (--lock->readers == 0)
+        {
+            flag = 1;
+        }
     }
-    if (lock->procq.size > 0 && (lock->readers == 0 || lock->operation == KRWLOCK_WRITE))
+    else
     {
+        flag = 1;
+    }
+    if (flag)
+    {
+        if (lock->procq.size)
+        {
+            multsk_awake((task_t *)kqueue_pop(&lock->procq));
+            kqueue_pop(&lock->opq);
+        }
         lock->operation = KRWLOCK_NONE;
-        multsk_awake((task_t *)kqueue_pop(&lock->procq));
-        kqueue_pop(&lock->opq);
     }
 }
