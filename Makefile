@@ -21,7 +21,10 @@ OBJECTS =\
 	build/syscall.o \
 	build/lock.o \
 	build/kb.o \
-	build/ata.o
+	build/ata.o \
+	build/pathbuf.o \
+	
+	# build/fs.o
 	
 	# build/fs.o
 	# build/ide.o

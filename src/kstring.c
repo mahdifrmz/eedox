@@ -156,7 +156,7 @@ char *kstring_str(kstring_t *kstr)
 
 void kstring_resize(kstring_t *kstr, uint32_t size)
 {
-    if (size >= kstr->size)
+    if (size >= kstr->size && size != 0)
     {
         char *newbuffer = kstring_alloc(kstr, size);
         strcpy(newbuffer, kstr->buffer);
