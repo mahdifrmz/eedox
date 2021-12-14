@@ -113,3 +113,30 @@ void pathbuf_free(pathbuf_t *buf)
     }
     vec_free(&buf->fields);
 }
+char *pathbuf_field(pathbuf_t *buf, uint32_t index)
+{
+    return (char *)buf->fields.buffer[index];
+}
+uint32_t pathbuf_len(pathbuf_t *buf)
+{
+    return buf->fields.size;
+}
+uint8_t pathbuf_cmp(pathbuf_t *buf1, pathbuf_t *buf2)
+{
+    if (pathbuf_len(buf1) != pathbuf_len(buf2) || buf1->is_absolute != buf2->is_absolute || buf1->back != buf2->back)
+    {
+        return 0;
+    }
+    for (uint32_t i = 0; i < pathbuf_len(buf1); i++)
+    {
+        if (strcmp(pathbuf_field(buf1, i), pathbuf_field(buf2, i)) != 0)
+        {
+            return 0;
+        }
+    }
+    return 1;
+}
+char *pathbuf_name(pathbuf_t *buf)
+{
+    return (char *)buf->fields.buffer[buf->fields.size - 1];
+}

@@ -16,5 +16,9 @@ void pathbuf_free(pathbuf_t *buf);
 pathbuf_t pathbuf_parse(const char *address);
 pathbuf_t pathbuf_join(pathbuf_t *buf1, pathbuf_t *buf2);
 pathbuf_t pathbuf_copy(pathbuf_t *buf);
+char *pathbuf_field(pathbuf_t *buf, uint32_t index);
+char *pathbuf_name(pathbuf_t *buf);
+uint8_t pathbuf_cmp(pathbuf_t *buf1, pathbuf_t *buf2);
+uint32_t pathbuf_len(pathbuf_t *buf);
 
 #endif
