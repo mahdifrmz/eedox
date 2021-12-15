@@ -49,7 +49,6 @@ unsigned char kbchars[128] = {
 
 kstring_t terminal_buffer;
 kstring_t input_buffer;
-krwlock reader_lock;
 task_t *reader_task = NULL;
 
 void keyboard_handler(__attribute__((unused)) registers *regs)
@@ -90,7 +89,6 @@ void keyboard_handler(__attribute__((unused)) registers *regs)
 
 void keyboard_init()
 {
-    krwlock_init(&reader_lock);
     terminal_buffer = kstring_new();
     input_buffer = kstring_new();
     load_int_handler(INTCODE_KEYBOARD, keyboard_handler);

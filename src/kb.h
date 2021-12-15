@@ -12,7 +12,6 @@ void keyboard_init();
 
 extern terminal_t glb_term;
 extern task_t *reader_task;
-extern krwlock reader_lock;
 extern kstring_t input_buffer;
 
 #endif

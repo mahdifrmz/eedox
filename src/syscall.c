@@ -6,6 +6,8 @@
 #include <lock.h>
 #include <kb.h>
 
+ksemaphore_t reader_lock;
+
 void syscall_test();
 
 void syscall_handle(registers *regs)
@@ -19,7 +21,7 @@ void syscall_handle(registers *regs)
     }
     if (regs->eax == SYSCALL_READ)
     {
-        krwlock_write(&reader_lock);
+        ksemaphore_wait(&reader_lock);
         char *buffer = (char *)regs->ecx;
         uint32_t len = regs->edx;
         while (1)
@@ -37,7 +39,7 @@ void syscall_handle(registers *regs)
             multsk_sleep();
         };
         regs->eax = 0;
-        krwlock_release(&reader_lock);
+        ksemaphore_signal(&reader_lock);
     }
     else if (regs->eax == SYSCALL_FORK)
     {
@@ -51,5 +53,6 @@ void syscall_handle(registers *regs)
 
 void syscall_init()
 {
+    ksemaphore_init(&reader_lock, 1);
     load_int_handler(INTCODE_SYSCALL, syscall_handle);
 }
