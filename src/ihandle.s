@@ -46,7 +46,7 @@ common_interrupt_handler:
     mov fs, ax
     mov gs, ax
     
-    push esp
+    push esp ; pointer to 'registers' struct
     call [interrupt_handler]
     pop esp
 
@@ -95,7 +95,7 @@ common_irq_handler:
     mov fs, ax
     mov gs, ax
 
-    push esp
+    push esp ; pointer to 'registers' struct
     call [irq_handler]
     pop esp
 
