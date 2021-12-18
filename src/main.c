@@ -96,8 +96,7 @@ void kinit()
 
 void syscall_test()
 {
-    uint32_t lba = balloc(4 + multk_getpid());
-    kprintf("lba=%u\n", lba);
+    kprintf("child table works perfectly!\n");
 }
 
 void kmain()
@@ -117,6 +116,5 @@ void kmain()
     }
 
     fs_init();
-
     asm_usermode(load_indlr());
 }

@@ -238,15 +238,18 @@ void inode_realloc(inode_t *node, uint32_t sectors, inode_t *parent)
     node->index = new_index;
 }
 
-void inode_fetch(lba28_t index, inode_t *node)
+void inode_fetch(_unused lba28_t index, _unused inode_t *node)
 {
-    uint32_t _ref = node->_refs;
-    krwlock _lock = node->_lock;
-    pathbuf_t _pathbuf = node->_pathbuf;
-    ata_read(index, node);
-    node->_refs = _ref;
-    node->_lock = _lock;
-    node->_pathbuf = _pathbuf;
+    inode_t *buffer = kmalloc(SECTOR_SIZE);
+    ata_read(index, buffer);
+    node->isvalid = buffer->isvalid;
+    node->alloc = buffer->alloc;
+    node->size = buffer->size;
+    node->child_count = buffer->child_count;
+    node->parent = buffer->parent;
+    node->type = buffer->type;
+    node->index = buffer->index;
+    kfree(buffer);
 }
 void inode_update(inode_t *node)
 {
@@ -254,9 +257,10 @@ void inode_update(inode_t *node)
 }
 inode_t *inode_new(pathbuf_t *pathbuf)
 {
-    inode_t *node = kmalloc(sizeof(SECTOR_SIZE));
+    inode_t *node = kmalloc(SECTOR_SIZE);
     node->_refs = 1;
     node->_pathbuf = pathbuf_copy(pathbuf);
+    inodelist_add(node);
     krwlock_init(&node->_lock);
     return node;
 }
@@ -295,7 +299,7 @@ void *childtable_find(childtable_t *table, const char *name)
     char *ptr = table->ptr;
     while (strcmp(ptr, name) != 0 && ptr != table->ptr + table->size)
     {
-        ptr += strlen(ptr) + 1;
+        ptr += strlen(ptr) + 1 + sizeof(lba28_t);
     }
     if (ptr == table->ptr + table->size)
     {
@@ -339,6 +343,7 @@ void childtable_remove(childtable_t *table, const char *name)
     {
         table->sectors--;
     }
+    table->size = new_size;
 }
 void childtable_edit_index(childtable_t *table, const char *name, lba28_t new)
 {
@@ -641,12 +646,19 @@ void fs_init()
     ata_init();
     binit();
     inodelist = vec_new();
-    // pathbuf_t root_path = pathbuf_root();
-    // inode_t *node_buffer = inode_new(&root_path);
-    // pathbuf_free(&root_path);
-    // inode_fetch(fsstart, node_buffer);
-
-    // while (1)
-    // {
-    // }
+    pathbuf_t root_path = pathbuf_root();
+    inode_t *node_buffer = inode_new(&root_path);
+    pathbuf_free(&root_path);
+    inode_fetch(fsstart, node_buffer);
+    if (!node_buffer->isvalid)
+    {
+        node_buffer->isvalid = 1;
+        node_buffer->child_count = 0;
+        node_buffer->index = fsstart;
+        node_buffer->parent = node_buffer->index; // recursive parent
+        node_buffer->size = 0;
+        node_buffer->alloc = 0;
+        node_buffer->type = inode_type_dir;
+        inode_update(node_buffer);
+    }
 }

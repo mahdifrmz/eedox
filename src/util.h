@@ -3,6 +3,7 @@
 
 #define PARTIAL_PRINT_BUFFER_SIZE 512
 #define NULL (void *)0x0
+#define _unused __attribute__((unused))
 
 #include <stdint.h>
 #include <stdarg.h>
