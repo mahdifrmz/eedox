@@ -75,7 +75,10 @@ void inode_create(inode_type type, inode_t *parent, const char *name, inode_t *n
     op.op = CHOP_ADD;
     op.name1 = name;
     op.index = node->index;
-    inode_child_set(parent, op, gparent);
+    if (parent)
+    {
+        inode_child_set(parent, op, gparent);
+    }
 }
 void inode_delete(inode_t *node, inode_t *parent)
 {
@@ -84,7 +87,10 @@ void inode_delete(inode_t *node, inode_t *parent)
     child_operation op;
     op.op = CHOP_REM;
     op.name1 = (const char *)node->_pathbuf.fields.buffer[node->_pathbuf.fields.size];
-    inode_child_set(parent, op, NULL);
+    if (parent)
+    {
+        inode_child_set(parent, op, NULL);
+    }
 }
 void inode_write(inode_t *node, uint32_t from, const char *buffer, uint32_t count, inode_t *parent)
 {
@@ -230,12 +236,15 @@ void inode_calculate_operation_bounds(inode_t *node, operation_bounds *operation
 void inode_realloc(inode_t *node, uint32_t sectors, inode_t *parent)
 {
     lba28_t new_index = brealloc(node->index, sectors);
-    child_operation op;
-    op.op = CHOP_RELOC;
-    op.name1 = (char *)pathbuf_name(&node->_pathbuf);
-    op.index = new_index;
-    inode_child_set(parent, op, NULL);
     node->index = new_index;
+    if (parent)
+    {
+        child_operation op;
+        op.op = CHOP_RELOC;
+        op.name1 = (char *)pathbuf_name(&node->_pathbuf);
+        op.index = new_index;
+        inode_child_set(parent, op, NULL);
+    }
 }
 
 void inode_fetch(_unused lba28_t index, _unused inode_t *node)
@@ -378,7 +387,7 @@ lba28_t childtable_get(childtable_t *table, const char *name)
 
 void fs_close(inode_t *node)
 {
-    if (--node->_refs)
+    if (node && --node->_refs)
     {
         inodelist_remove(node);
         pathbuf_free(&node->_pathbuf);
@@ -387,6 +396,10 @@ void fs_close(inode_t *node)
 }
 inode_t *fs_node_parent(inode_t *node)
 {
+    if (!node || node->index == fsstart)
+    {
+        return NULL;
+    }
     pathbuf_t pathbuf = pathbuf_copy(&node->_pathbuf);
     vec_pop(&pathbuf.fields);
     inode_t *parent = inodelist_get(&pathbuf);
@@ -406,6 +419,10 @@ inode_t *fs_node_parent(inode_t *node)
 
 inode_t *fs_node_child(inode_t *node, const char *name)
 {
+    if (!node)
+    {
+        return NULL;
+    }
     pathbuf_t pathbuf = pathbuf_copy(&node->_pathbuf);
     vec_push(&pathbuf.fields, (uint32_t)name);
     krwlock_read(&node->_lock);
@@ -467,9 +484,17 @@ int8_t fs_node_open(pathbuf_t *pathbuf, inode_t **node, inode_t **parent, inode_
         {
             *parent = (inode_t *)vec_pop(&loaded);
         }
+        else
+        {
+            *parent = NULL;
+        }
         if (loaded.size)
         {
             *gparent = (inode_t *)vec_pop(&loaded);
+        }
+        else
+        {
+            *gparent = NULL;
         }
     }
     for (uint32_t i = 0; i < loaded.size; i++)
@@ -480,6 +505,30 @@ int8_t fs_node_open(pathbuf_t *pathbuf, inode_t **node, inode_t **parent, inode_
     return res;
 }
 
+void fs_node_rdlock(inode_t *node)
+{
+    if (node)
+    {
+        krwlock_read(&node->_lock);
+    }
+}
+
+void fs_node_wrlock(inode_t *node)
+{
+    if (node)
+    {
+        krwlock_write(&node->_lock);
+    }
+}
+
+void fs_node_unlock(inode_t *node)
+{
+    if (node)
+    {
+        krwlock_release(&node->_lock);
+    }
+}
+
 inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate)
 {
     inode_t *node;
@@ -487,10 +536,10 @@ inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate)
     inode_t *gparent;
     fs_node_open(pathbuf, &node, &parent, &gparent);
 
-    krwlock_read(&node->_lock);
+    fs_node_rdlock(node);
     uint8_t is_valid = node->isvalid;
     inode_type type = node->type;
-    krwlock_release(&node->_lock);
+    fs_node_unlock(node);
 
     if (is_valid && type == inode_type_dir)
     {
@@ -500,17 +549,17 @@ inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate)
     {
         if (create)
         {
-            krwlock_write(&gparent->_lock);
-            krwlock_write(&parent->_lock);
-            krwlock_write(&node->_lock);
+            fs_node_wrlock(gparent);
+            fs_node_wrlock(parent);
+            fs_node_wrlock(node);
             if (!node->isvalid)
             {
                 const char *name = (char *)pathbuf_name(&node->_pathbuf);
                 inode_create(inode_type_file, parent, name, node, gparent);
             }
-            krwlock_release(&gparent->_lock);
-            krwlock_release(&parent->_lock);
-            krwlock_release(&node->_lock);
+            fs_node_unlock(gparent);
+            fs_node_unlock(parent);
+            fs_node_unlock(node);
         }
         else
         {
@@ -519,9 +568,9 @@ inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate)
     }
     else if (truncate)
     {
-        krwlock_write(&node->_lock);
+        fs_node_wrlock(node);
         inode_truncate(node);
-        krwlock_release(&node->_lock);
+        fs_node_unlock(node);
     }
     return node;
 }
@@ -530,33 +579,33 @@ void fs_write(inode_t *node, const char *str, uint32_t from, uint32_t len)
 {
     inode_t *parent = fs_node_parent(node);
 
-    krwlock_write(&parent->_lock);
-    krwlock_write(&node->_lock);
+    fs_node_wrlock(parent);
+    fs_node_wrlock(node);
     inode_write(node, from, str, len, parent);
-    krwlock_release(&parent->_lock);
-    krwlock_release(&node->_lock);
+    fs_node_unlock(parent);
+    fs_node_unlock(node);
     fs_close(parent);
 }
 
 void fs_read(inode_t *node, char *str, uint32_t from, uint32_t len)
 {
-    krwlock_read(&node->_lock);
+    fs_node_rdlock(node);
     inode_read(node, from, str, len);
-    krwlock_release(&node->_lock);
+    fs_node_unlock(node);
 }
 
 void fs_unlink(inode_t *node)
 {
     inode_t *parent = fs_node_parent(node);
 
-    krwlock_write(&parent->_lock);
-    krwlock_write(&node->_lock);
+    fs_node_wrlock(parent);
+    fs_node_wrlock(node);
     if (node->isvalid)
     {
         inode_delete(node, parent);
     }
-    krwlock_release(&parent->_lock);
-    krwlock_release(&node->_lock);
+    fs_node_unlock(parent);
+    fs_node_unlock(node);
     fs_close(parent);
 }
 
@@ -567,19 +616,19 @@ void fs_mkdir(pathbuf_t *pathbuf)
     inode_t *gparent;
     fs_node_open(pathbuf, &node, &parent, &gparent);
 
-    krwlock_read(&node->_lock);
+    fs_node_rdlock(node);
     uint8_t is_valid = node->isvalid;
     inode_type type = node->type;
-    krwlock_release(&node->_lock);
+    fs_node_unlock(node);
 
     if (is_valid || type != inode_type_dir)
     {
         return; // err
     }
 
-    krwlock_write(&gparent->_lock);
-    krwlock_write(&parent->_lock);
-    krwlock_write(&node->_lock);
+    fs_node_wrlock(gparent);
+    fs_node_wrlock(parent);
+    fs_node_wrlock(node);
     if (node->isvalid)
     {
         return; // err
@@ -598,10 +647,10 @@ inode_t *fs_opendir(pathbuf_t *pathbuf)
     inode_t *gparent;
     fs_node_open(pathbuf, &node, &parent, &gparent);
 
-    krwlock_read(&node->_lock);
+    fs_node_rdlock(node);
     uint8_t is_valid = node->isvalid;
     inode_type type = node->type;
-    krwlock_release(&node->_lock);
+    fs_node_unlock(node);
 
     if (!is_valid || type != inode_type_dir)
     {
@@ -614,9 +663,9 @@ inode_t *fs_opendir(pathbuf_t *pathbuf)
 
 uint32_t fs_readdir(inode_t *node, char *buffer, uint32_t from)
 {
-    krwlock_read(&node->_lock);
+    fs_node_rdlock(node);
     return inode_readdir(node, from, buffer);
-    krwlock_release(&node->_lock);
+    fs_node_unlock(node);
 }
 
 int32_t fs_rmdir(pathbuf_t *pathbuf)
@@ -627,13 +676,13 @@ int32_t fs_rmdir(pathbuf_t *pathbuf)
         return -1;
     }
     inode_t *par = fs_node_parent(dir);
-    krwlock_write(&par->_lock);
-    krwlock_write(&dir->_lock);
+    fs_node_wrlock(par);
+    fs_node_wrlock(dir);
 
     inode_delete(dir, par);
 
-    krwlock_release(&par->_lock);
-    krwlock_release(&dir->_lock);
+    fs_node_unlock(par);
+    fs_node_unlock(dir);
     fs_close(dir);
     fs_close(par);
     return 0;
@@ -655,7 +704,7 @@ void fs_init()
         node_buffer->isvalid = 1;
         node_buffer->child_count = 0;
         node_buffer->index = fsstart;
-        node_buffer->parent = node_buffer->index; // recursive parent
+        node_buffer->parent = 0; // no parent
         node_buffer->size = 0;
         node_buffer->alloc = 0;
         node_buffer->type = inode_type_dir;

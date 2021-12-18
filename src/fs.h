@@ -94,6 +94,9 @@ void inode_delete(inode_t *node, inode_t *parent);
 void inode_create(inode_type type, inode_t *parent, const char *name, inode_t *node, inode_t *gparent);
 void inode_update(inode_t *node);
 
+void fs_node_rdlock(inode_t *node);
+void fs_node_wrlock(inode_t *node);
+void fs_node_unlock(inode_t *node);
 inode_t *fs_node_parent(inode_t *node);
 inode_t *fs_node_child(inode_t *node, const char *name);
 inode_t *fs_node_root();
