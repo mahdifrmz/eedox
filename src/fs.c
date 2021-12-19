@@ -75,10 +75,8 @@ void inode_create(inode_type type, inode_t *parent, const char *name, inode_t *n
     op.op = CHOP_ADD;
     op.name1 = name;
     op.index = node->index;
-    if (parent)
-    {
-        inode_child_set(parent, op, gparent);
-    }
+
+    inode_child_set(parent, op, gparent);
 }
 void inode_delete(inode_t *node, inode_t *parent)
 {
@@ -94,6 +92,10 @@ void inode_delete(inode_t *node, inode_t *parent)
 }
 void inode_write(inode_t *node, uint32_t from, const char *buffer, uint32_t count, inode_t *parent)
 {
+    if (!count)
+    {
+        return;
+    }
     operation_bounds op;
     op.bytes_from = from;
     op.bytes_count = count;
@@ -101,21 +103,23 @@ void inode_write(inode_t *node, uint32_t from, const char *buffer, uint32_t coun
     if (op.sec_overflow)
     {
         inode_realloc(node, op.sec_overflow + node->alloc, parent);
+        inode_calculate_operation_bounds(node, &op);
     }
     if (op.bytes_overflow)
     {
         node->size += op.bytes_overflow;
+        inode_update(node);
     }
-    char *blocks = kmalloc(MAX_NODE_NAME_LENGTH * op.sec_count);
+    char *blocks = kmalloc(SECTOR_SIZE * op.sec_count);
     uint32_t blocks_count = op.sec_count - op.sec_overflow;
     for (lba28_t i = 0; i < blocks_count; i++)
     {
-        ata_read(node->index + 1 + op.sec_from + i, blocks + i * SECTOR_SIZE);
+        ata_read(op.sec_from + i, blocks + i * SECTOR_SIZE);
     }
     memcpy(blocks + from, buffer, count);
-    for (lba28_t i = 0; i < blocks_count; i++)
+    for (lba28_t i = 0; i < op.sec_count; i++)
     {
-        ata_write(node->index + 1 + op.sec_from + i, blocks + i * SECTOR_SIZE);
+        ata_write(op.sec_from + i, blocks + i * SECTOR_SIZE);
     }
     kfree(blocks);
 }
@@ -127,19 +131,23 @@ void inode_truncate(inode_t *node)
 }
 uint32_t inode_read(inode_t *node, uint32_t from, char *buffer, uint32_t count)
 {
+    if (!count)
+    {
+        return 0;
+    }
     operation_bounds op;
     op.bytes_from = from;
     op.bytes_count = count;
     inode_calculate_operation_bounds(node, &op);
 
     uint32_t blocks_count = op.sec_count - op.sec_overflow;
-    char *blocks = kmalloc(SECTOR_SIZE * blocks_count);
+    char *blocks = kmalloc(SECTOR_SIZE * max(1, blocks_count));
     for (lba28_t i = 0; i < blocks_count; i++)
     {
-        ata_read(node->index + 1 + op.sec_from + i, blocks + i * SECTOR_SIZE);
+        ata_read(op.sec_from + i, blocks + i * SECTOR_SIZE);
     }
+
     memcpy(buffer, blocks, count - op.bytes_overflow);
-    buffer += (count - op.bytes_overflow);
     kfree(blocks);
     return count - op.bytes_overflow;
 }
@@ -160,7 +168,7 @@ uint32_t inode_readdir(inode_t *node, uint32_t from, char *buffer)
 void inode_child(inode_t *node, const char *name, inode_t *buffer)
 {
     childtable_t table;
-    table.ptr = kmalloc(node->alloc * SECTOR_SIZE);
+    table.ptr = kmalloc(max(1, node->alloc) * SECTOR_SIZE);
     table.sectors = node->alloc;
     table.size = node->size;
     inode_read(node, 0, (char *)table.ptr, node->size);
@@ -178,7 +186,7 @@ void inode_child(inode_t *node, const char *name, inode_t *buffer)
 void inode_child_set(inode_t *node, child_operation op, inode_t *parent)
 {
     childtable_t table;
-    table.ptr = kmalloc(node->alloc * SECTOR_SIZE);
+    table.ptr = kmalloc(max(node->alloc, 1) * SECTOR_SIZE);
     table.size = node->size;
     table.sectors = node->alloc;
 
@@ -196,28 +204,29 @@ void inode_child_set(inode_t *node, child_operation op, inode_t *parent)
     {
         childtable_edit_name(&table, op.name1, op.name2);
     }
+    else if (op.op == CHOP_RELOC)
+    {
+        childtable_edit_index(&table, op.name1, op.index);
+    }
     else
     {
         childtable_remove(&table, op.name1);
     }
 
-    node->alloc = table.sectors;
-    node->size = table.size;
-
-    inode_write(node, 0, (char *)table.ptr, node->size, parent);
+    inode_write(node, 0, (char *)table.ptr, table.size, parent);
     inode_update(node);
     kfree(table.ptr);
 }
 void inode_calculate_operation_bounds(inode_t *node, operation_bounds *operation)
 {
     uint32_t bytes_to = operation->bytes_from + operation->bytes_count;
-    operation->sec_from = node->index + operation->bytes_from / SECTOR_SIZE;
-    lba28_t sec_to = node->index + ((bytes_to - 1) / SECTOR_SIZE) + 1;
+    operation->sec_from = node->index + 1 + operation->bytes_from / SECTOR_SIZE;
+    lba28_t sec_to = node->index + 1 + ((bytes_to - 1) / SECTOR_SIZE) + 1;
     operation->sec_count = sec_to - operation->sec_from;
 
-    if (sec_to > node->index + node->alloc)
+    if (sec_to > node->index + 1 + node->alloc)
     {
-        operation->sec_overflow = sec_to - (node->index + node->alloc);
+        operation->sec_overflow = sec_to - (node->index + 1 + node->alloc);
     }
     else
     {
@@ -235,8 +244,10 @@ void inode_calculate_operation_bounds(inode_t *node, operation_bounds *operation
 }
 void inode_realloc(inode_t *node, uint32_t sectors, inode_t *parent)
 {
-    lba28_t new_index = brealloc(node->index, sectors);
+    lba28_t new_index = brealloc(node->index, sectors + 1);
     node->index = new_index;
+    node->alloc = sectors;
+    inode_update(node);
     if (parent)
     {
         child_operation op;
@@ -306,11 +317,19 @@ void inodelist_remove(inode_t *node)
 void *childtable_find(childtable_t *table, const char *name)
 {
     char *ptr = table->ptr;
-    while (strcmp(ptr, name) != 0 && ptr != table->ptr + table->size)
+    while (1)
     {
+        if ((char *)table->ptr + table->size <= ptr)
+        {
+            break;
+        }
+        if (strcmp(ptr, name) == 0)
+        {
+            break;
+        }
         ptr += strlen(ptr) + 1 + sizeof(lba28_t);
     }
-    if (ptr == table->ptr + table->size)
+    if (ptr >= (char *)table->ptr + table->size)
     {
         return NULL;
     }
@@ -703,7 +722,7 @@ void fs_init()
     {
         node_buffer->isvalid = 1;
         node_buffer->child_count = 0;
-        node_buffer->index = fsstart;
+        node_buffer->index = balloc(1);
         node_buffer->parent = 0; // no parent
         node_buffer->size = 0;
         node_buffer->alloc = 0;

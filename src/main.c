@@ -94,9 +94,58 @@ void kinit()
     stack_init();
 }
 
+void readfs();
+
 void syscall_test()
 {
-    kprintf("child table works perfectly!\n");
+    inode_t *root = fs_node_root();
+    pathbuf_t path = pathbuf_parse("/firstborn");
+    inode_t *fb = inode_new(&path);
+    inode_create(inode_type_file, root, "firstborn", fb, NULL);
+
+    inode_t *ch = inode_new(&path);
+    inode_child(root, "firstborn", ch);
+    inode_write(ch, 0, "salamski", 8, root);
+
+    pathbuf_t fpath = pathbuf_parse("/ffol");
+    inode_t *ff = inode_new(&fpath);
+    inode_create(inode_type_dir, root, "ffol", ff, ch);
+
+    pathbuf_t vpath = pathbuf_parse("/ffol/VECHE");
+    inode_t *vf = inode_new(&vpath);
+    inode_create(inode_type_file, ff, "VECHE", vf, root);
+
+    const char *vbuf = "slavovich poniatowski II";
+    inode_write(vf, 11, vbuf, strlen(vbuf), ff);
+
+    readfs();
+    // char *buf = "salamski~\n";
+    // inode_write(ch, 0, buf, strlen(buf), NULL);
+}
+
+void readfs()
+{
+    inode_t *root = fs_node_root();
+    pathbuf_t path = pathbuf_parse("/firstborn");
+    inode_t *fb = inode_new(&path);
+    inode_child(root, "firstborn", fb);
+
+    char *buffer = kmalloc(64);
+    uint32_t rsl = inode_read(fb, 0, buffer, 64);
+    term_print_buffer(&glb_term, buffer, rsl);
+    kprintf("\n");
+
+    pathbuf_t fath = pathbuf_parse("/ffol");
+    inode_t *ff = inode_new(&fath);
+    inode_child(root, "ffol", ff);
+
+    pathbuf_t vath = pathbuf_parse("/ffol/VECHE");
+    inode_t *vf = inode_new(&vath);
+    inode_child(ff, "VECHE", vf);
+
+    rsl = inode_read(vf, 0, buffer, 64);
+    term_print_buffer(&glb_term, buffer, rsl);
+    kprintf("\n");
 }
 
 void kmain()

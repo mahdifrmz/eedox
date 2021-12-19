@@ -138,5 +138,12 @@ uint8_t pathbuf_cmp(pathbuf_t *buf1, pathbuf_t *buf2)
 }
 char *pathbuf_name(pathbuf_t *buf)
 {
-    return (char *)buf->fields.buffer[buf->fields.size - 1];
+    if (buf->fields.size)
+    {
+        return (char *)buf->fields.buffer[buf->fields.size - 1];
+    }
+    else
+    {
+        return NULL;
+    }
 }
