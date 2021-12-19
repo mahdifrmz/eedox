@@ -85,8 +85,8 @@ void vec_insert(vec_t *vec, uint32_t pos, uint32_t val)
 vec_t vec_copy(vec_t *vec)
 {
     vec_t newvec = *vec;
-    uint32_t *newbuffer = vec_alloc(vec, vec->cap);
-    newvec.buffer = newbuffer;
+    newvec.buffer = vec_alloc(vec, vec->cap);
+    memcpy(newvec.buffer, vec->buffer, vec->size * sizeof(uint32_t));
     return newvec;
 }
 
