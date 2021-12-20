@@ -65,8 +65,9 @@ pathbuf_t pathbuf_parse(const char *address)
         }
         else if (buffer.size)
         {
-            vec_push(&fields, (uint32_t)kstring_str(&buffer)); // own the Kstring fields
-            buffer = kstring_new();                            // release the previous fields
+            vec_push(&fields, (uint32_t)strdup(kstring_str(&buffer)));
+            kstring_free(&buffer);
+            buffer = kstring_new();
             if (c == 0)
             {
                 pathbuf.is_expldir = 0;
