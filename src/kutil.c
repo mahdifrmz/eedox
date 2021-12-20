@@ -39,6 +39,15 @@ int32_t _kprintf(const char *message, va_list args)
     return count;
 }
 
+char *strdup(const char *str)
+{
+    uint32_t len = strlen(str);
+    char *dup = kmalloc(strlen(str) + 1);
+    dup[len] = 0;
+    strcpy(dup, str);
+    return dup;
+}
+
 int32_t kprintf(const char *message, ...)
 {
     va_list args;

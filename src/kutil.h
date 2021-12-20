@@ -11,6 +11,8 @@ void *kmalloc(uint32_t size);
 void *kmalloc_a(uint32_t size);
 void kfree(void *ptr);
 
+char *strdup(const char *str);
+
 int32_t kprintf(const char *message, ...);
 
 #endif
