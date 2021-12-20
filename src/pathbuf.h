@@ -20,5 +20,6 @@ char *pathbuf_field(pathbuf_t *buf, uint32_t index);
 char *pathbuf_name(pathbuf_t *buf);
 uint8_t pathbuf_cmp(pathbuf_t *buf1, pathbuf_t *buf2);
 uint32_t pathbuf_len(pathbuf_t *buf);
+pathbuf_t pathbuf_parent(pathbuf_t *buf);
 
 #endif

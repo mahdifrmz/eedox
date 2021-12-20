@@ -147,3 +147,14 @@ char *pathbuf_name(pathbuf_t *buf)
         return NULL;
     }
 }
+
+pathbuf_t pathbuf_parent(pathbuf_t *buf)
+{
+    pathbuf_t par = pathbuf_copy(buf);
+    if (par.fields.size)
+    {
+        vec_pop(&par.fields);
+    }
+    par.is_expldir = 1;
+    return par;
+}
