@@ -45,7 +45,7 @@ void vec_push(vec_t *vec, uint32_t val)
 
 uint32_t vec_pop(vec_t *vec)
 {
-    return vec->buffer[vec->size--];
+    return vec->buffer[--vec->size];
 }
 
 void vec_erase(vec_t *vec, uint32_t pos, uint32_t len)
