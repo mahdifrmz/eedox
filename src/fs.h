@@ -30,12 +30,12 @@ struct /*__attribute__((packed))*/ inode_t
     uint32_t size;  // in bytes
     uint32_t alloc; // data sectors count
     uint32_t child_count;
-    uint32_t parent; // lba
     inode_type type;
 
     uint32_t _refs;
     pathbuf_t _pathbuf;
     krwlock _lock;
+    inode_t *_parent;
 };
 
 typedef struct
@@ -97,7 +97,6 @@ void inode_update(inode_t *node);
 void fs_node_rdlock(inode_t *node);
 void fs_node_wrlock(inode_t *node);
 void fs_node_unlock(inode_t *node);
-inode_t *fs_node_parent(inode_t *node);
 inode_t *fs_node_child(inode_t *node, const char *name);
 inode_t *fs_node_root();
 int8_t fs_node_open(pathbuf_t *pathbuf, inode_t **node, inode_t **parent, inode_t **gparent);
@@ -109,12 +108,11 @@ void inodelist_add(inode_t *node);
 inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate);
 void fs_close(inode_t *node);
 void fs_write(inode_t *node, const char *str, uint32_t from, uint32_t len);
-void fs_read(inode_t *node, char *str, uint32_t from, uint32_t len);
+uint32_t fs_read(inode_t *node, char *str, uint32_t from, uint32_t len);
 void fs_unlink(inode_t *node);
 void fs_mkdir(pathbuf_t *pathbuf);
 inode_t *fs_opendir(pathbuf_t *pathbuf);
 uint32_t fs_readdir(inode_t *node, char *buffer, uint32_t from);
-int32_t fs_rmdir(pathbuf_t *pathbuf);
 void fs_init();
 
 #endif
