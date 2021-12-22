@@ -42,7 +42,7 @@ int32_t _kprintf(const char *message, va_list args)
 char *strdup(const char *str)
 {
     uint32_t len = strlen(str);
-    char *dup = kmalloc(strlen(str) + 1);
+    char *dup = kmalloc(len + 1);
     dup[len] = 0;
     strcpy(dup, str);
     return dup;
