@@ -3,8 +3,8 @@
 uint32_t ordlist_insert(ordlist_t *ordlist, void *elem)
 {
     uint32_t idx = ordlist->size;
-    while (idx > 0 && ((ordlist->compare(ordlist->array[idx - 1], elem) == 1 && ordlist->order == ORDER_ASCENDING) ||
-                       (ordlist->compare(ordlist->array[idx - 1], elem) == -1 && ordlist->order == ORDER_DESCENDING)))
+    while (idx > 0 && ((ordlist->cmp((uint32_t)ordlist->array[idx - 1], (uint32_t)elem) == 1 && ordlist->order == ORDER_ASCENDING) ||
+                       (ordlist->cmp((uint32_t)ordlist->array[idx - 1], (uint32_t)elem) == -1 && ordlist->order == ORDER_DESCENDING)))
     {
         ordlist->array[idx] = ordlist->array[idx - 1];
         idx--;
@@ -31,13 +31,13 @@ uint32_t ordlist_size(ordlist_t *ordlist)
 {
     return ordlist->size;
 }
-void ordlist_place(ordlist_t *ordlist, void *arr, uint32_t max_size, order_t order, ordlist_compare compare)
+void ordlist_place(ordlist_t *ordlist, void *arr, uint32_t max_size, order_t order, compare cmp)
 {
     ordlist->array = arr;
     ordlist->max_size = max_size;
     ordlist->order = order;
     ordlist->size = 0;
-    ordlist->compare = compare;
+    ordlist->cmp = cmp;
 }
 void ordlist_clear(ordlist_t *ordlist)
 {

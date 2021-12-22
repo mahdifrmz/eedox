@@ -178,34 +178,34 @@ void tostr_x(char *buffer, uint32_t h)
     }
 }
 
-int32_t _bin_search(uint32_t *ptr, int32_t from, int32_t to, uint32_t value)
+int32_t _bin_search(uint32_t *ptr, int32_t from, int32_t to, uint32_t value, compare cmp)
 {
     if (to < from)
     {
         return -1;
     }
     uint32_t mid = (from + to) / 2;
-    if (ptr[mid] == value)
+    if (cmp(ptr[mid], value) == 0)
     {
         return mid;
     }
-    else if (ptr[mid] > value)
+    else if (cmp(ptr[mid], value) == 1)
     {
-        return _bin_search(ptr, from, mid - 1, value);
+        return _bin_search(ptr, from, mid - 1, value, cmp);
     }
     else
     {
-        return _bin_search(ptr, mid + 1, to, value);
+        return _bin_search(ptr, mid + 1, to, value, cmp);
     }
 }
 
-int32_t bin_search(uint32_t *ptr, int32_t len, int32_t value)
+int32_t bin_search(uint32_t *ptr, int32_t len, int32_t value, compare cmp)
 {
     if (len == 0)
     {
         return -1;
     }
-    return _bin_search(ptr, 0, len - 1, value);
+    return _bin_search(ptr, 0, len - 1, value, cmp);
 }
 
 int32_t partial_print(char *buffer, int32_t index, const char *message, va_list args)

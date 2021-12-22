@@ -1,7 +1,7 @@
 #include <kheap.h>
 #include <util.h>
 
-int8_t compare(void *a, void *b)
+int8_t compare_headers(uint32_t a, uint32_t b)
 {
     uint32_t as = ((hheader_t *)a)->size;
     uint32_t bs = ((hheader_t *)b)->size;
@@ -25,7 +25,7 @@ void heap_init(heap_t *heap, void *start, uint32_t size, uint32_t index_size, ui
     heap->readonly = readonly;
     heap->supervisor = supervisor;
 
-    ordlist_place(&heap->index, (void *)start, index_size, ORDER_ASCENDING, compare);
+    ordlist_place(&heap->index, (void *)start, index_size, ORDER_ASCENDING, compare_headers);
     start += index_size;
 
     if ((uint32_t)start % 1000 != 0)
@@ -107,7 +107,7 @@ void heap_high_split(heap_t *heap, hheader_t *hole, uint32_t size)
 
 uint32_t heap_hole_index(heap_t *heap, hheader_t *head)
 {
-    return bin_search((uint32_t *)heap->index.array, heap->index.size, (uint32_t)head);
+    return bin_search((uint32_t *)heap->index.array, heap->index.size, (uint32_t)head, compare_headers);
 }
 
 void heap_merge(heap_t *heap, hheader_t *hole)

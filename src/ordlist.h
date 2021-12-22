@@ -2,8 +2,7 @@
 #define ORDLIST_H
 
 #include <stdint.h>
-
-typedef int8_t (*ordlist_compare)(void *a, void *b);
+#include <util.h>
 
 typedef enum
 {
@@ -16,7 +15,7 @@ typedef struct
     uint32_t size;
     uint32_t max_size;
     void **array;
-    ordlist_compare compare;
+    compare cmp;
     order_t order;
 } ordlist_t;
 
@@ -25,5 +24,5 @@ void ordlist_clear(ordlist_t *ordlist);
 void *ordlist_remove(ordlist_t *ordlist, int32_t idx);
 void *ordlist_get(ordlist_t *ordlist, int32_t idx);
 uint32_t ordlist_size(ordlist_t *ordlist);
-void ordlist_place(ordlist_t *ordlist, void *arr, uint32_t max_size, order_t order, ordlist_compare compare);
+void ordlist_place(ordlist_t *ordlist, void *arr, uint32_t max_size, order_t order, compare cmp);
 #endif
