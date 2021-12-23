@@ -91,7 +91,7 @@ uint32_t inode_readdir(inode_t *node, uint32_t from, char *buffer);
 void inode_write(inode_t *node, uint32_t from, const char *buffer, uint32_t count, inode_t *parent);
 void inode_truncate(inode_t *node);
 void inode_delete(inode_t *node, inode_t *parent);
-void inode_create(inode_type type, inode_t *parent, const char *name, inode_t *node, inode_t *gparent);
+void inode_create(uint8_t dir, inode_t *parent, const char *name, inode_t *node, inode_t *gparent);
 void inode_update(inode_t *node);
 
 void fs_node_rdlock(inode_t *node);
@@ -105,13 +105,10 @@ inode_t *inodelist_get(pathbuf_t *pathbuf);
 void inodelist_remove(inode_t *node);
 void inodelist_add(inode_t *node);
 
-inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate);
+inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate, uint8_t dir, uint8_t unlink, int8_t *result);
 void fs_close(inode_t *node);
 void fs_write(inode_t *node, const char *str, uint32_t from, uint32_t len);
 uint32_t fs_read(inode_t *node, char *str, uint32_t from, uint32_t len);
-void fs_unlink(inode_t *node);
-void fs_mkdir(pathbuf_t *pathbuf);
-inode_t *fs_opendir(pathbuf_t *pathbuf);
 uint32_t fs_readdir(inode_t *node, char *buffer, uint32_t from);
 void fs_init();
 

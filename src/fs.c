@@ -57,14 +57,14 @@ lba28_t brealloc(lba28_t address, lba28_t size)
     return balloc(size);
 }
 
-void inode_create(inode_type type, inode_t *parent, const char *name, inode_t *node, inode_t *gparent)
+void inode_create(uint8_t dir, inode_t *parent, const char *name, inode_t *node, inode_t *gparent)
 {
     if (strlen(name) > MAX_NODE_NAME_LENGTH)
     {
         kpanic("name %s is longer than %u characters and thus not suitable for a file name", name, MAX_NODE_NAME_LENGTH);
     }
 
-    node->type = type;
+    node->type = dir ? inode_type_dir : inode_type_file;
     node->alloc = 0;
     node->size = 0;
     node->child_count = 0;
@@ -537,55 +537,60 @@ void fs_node_unlock(inode_t *node)
     }
 }
 
-inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate)
+inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate, uint8_t dir, uint8_t unlink, int8_t *result)
 {
-    if (pathbuf->is_expldir)
-    {
-        return NULL;
-    }
-
     inode_t *node;
     inode_t *parent;
     inode_t *gparent;
-    fs_node_open(pathbuf, &node, &parent, &gparent);
+    int8_t rsl = fs_node_open(pathbuf, &node, &parent, &gparent);
+    if (rsl != 0)
+    {
+        *result = -1; // invalid path
+        return NULL;
+    }
+    fs_node_wrlock(gparent);
+    fs_node_wrlock(parent);
+    fs_node_wrlock(node);
 
-    fs_node_rdlock(node);
     uint8_t is_valid = node->isvalid;
-    inode_type type = node->type;
-    fs_node_unlock(node);
+    uint8_t is_dir = node->type == inode_type_dir ? 1 : 0;
 
     if (!is_valid)
     {
         if (create)
         {
-            fs_node_wrlock(gparent);
-            fs_node_wrlock(parent);
-            fs_node_wrlock(node);
-            if (!node->isvalid)
-            {
-                const char *name = (char *)pathbuf_name(&node->_pathbuf);
-                inode_create(inode_type_file, parent, name, node, gparent);
-            }
-            fs_node_unlock(gparent);
-            fs_node_unlock(parent);
-            fs_node_unlock(node);
+            inode_create(dir, parent, pathbuf_name(pathbuf), node, gparent);
         }
         else
         {
-            return NULL;
+            *result = -2; // file not existing
         }
     }
-    else if (type == inode_type_dir)
+    else
     {
-        return NULL;
+        if (dir != is_dir)
+        {
+            *result = -3; // invalid type
+        }
+        if (unlink)
+        {
+            if (is_dir && node->child_count > 0)
+            {
+                *result = -4; // attemp to remove directory with children
+            }
+            inode_delete(node, parent);
+        }
+        if (truncate)
+        {
+            inode_truncate(node);
+        }
     }
-    else if (truncate)
-    {
-        fs_node_wrlock(node);
-        inode_truncate(node);
-        fs_node_unlock(node);
-    }
+
     node->_parent = parent;
+
+    fs_node_unlock(gparent);
+    fs_node_unlock(parent);
+    fs_node_unlock(node);
     fs_close(gparent);
     return node;
 }
@@ -608,73 +613,6 @@ uint32_t fs_read(inode_t *node, char *str, uint32_t from, uint32_t len)
     uint32_t count = inode_read(node, from, str, len);
     fs_node_unlock(node);
     return count;
-}
-
-void fs_unlink(inode_t *node)
-{
-    inode_t *parent = node->_parent;
-
-    fs_node_wrlock(parent);
-    fs_node_wrlock(node);
-    if (node->isvalid)
-    {
-        inode_delete(node, parent);
-    }
-    fs_node_unlock(parent);
-    fs_node_unlock(node);
-    fs_close(parent);
-}
-
-void fs_mkdir(pathbuf_t *pathbuf)
-{
-    inode_t *node;
-    inode_t *parent;
-    inode_t *gparent;
-    fs_node_open(pathbuf, &node, &parent, &gparent);
-
-    fs_node_rdlock(node);
-    uint8_t is_valid = node->isvalid;
-    inode_type type = node->type;
-    fs_node_unlock(node);
-
-    if (is_valid || type != inode_type_dir)
-    {
-        return; // err
-    }
-
-    fs_node_wrlock(gparent);
-    fs_node_wrlock(parent);
-    fs_node_wrlock(node);
-    if (node->isvalid)
-    {
-        return; // err
-    }
-    const char *name = (char *)pathbuf_name(&node->_pathbuf);
-    inode_create(inode_type_dir, parent, name, node, gparent);
-    fs_close(node);
-    fs_close(parent);
-    fs_close(gparent);
-}
-
-inode_t *fs_opendir(pathbuf_t *pathbuf)
-{
-    inode_t *node;
-    inode_t *parent;
-    inode_t *gparent;
-    fs_node_open(pathbuf, &node, &parent, &gparent);
-
-    fs_node_rdlock(node);
-    uint8_t is_valid = node->isvalid;
-    inode_type type = node->type;
-    fs_node_unlock(node);
-
-    if (!is_valid || type != inode_type_dir)
-    {
-        return NULL;
-    }
-    node->_parent = parent;
-    fs_close(gparent);
-    return node;
 }
 
 uint32_t fs_readdir(inode_t *node, char *buffer, uint32_t from)
