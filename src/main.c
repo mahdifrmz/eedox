@@ -146,7 +146,7 @@ void kmain()
     kprintf("Kernel initialized successfully\n");
     timer_init(100);
     keyboard_init();
-    syscall_init();
+    syscalls_init();
     multsk_init();
     load_int_handler(INTCODE_GPF, GPF_handler);
 

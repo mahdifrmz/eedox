@@ -26,24 +26,39 @@ void multsk_switch(uint32_t sleep)
     {
         return;
     }
+
     task_t *curtask = (task_t *)kqueue_pop(&rr_queue);
-    curtask->ebp = asm_get_ebp();
-    curtask->esp = asm_get_esp();
-    curtask->eip = asm_get_eip();
-    if (curtask->eip != 0xffffffff)
+    if (sleep == 2) // termination
     {
-        if (!sleep)
-        {
-            kqueue_push(&rr_queue, (uint32_t)curtask);
-        }
-        task_t *nextask = (task_t *)kqueue_peek(&rr_queue);
-        eip_buffer = nextask->eip;
-        ebp_buffer = nextask->ebp;
-        esp_buffer = nextask->esp;
-        current_task = nextask;
-        current_page_directory = current_task->page_dir;
-        asm_multsk_switch();
+        multsk_free(curtask);
     }
+    else
+    {
+        curtask->ebp = asm_get_ebp();
+        curtask->esp = asm_get_esp();
+        curtask->eip = asm_get_eip();
+
+        if (curtask->eip == 0xffffffff)
+        {
+            return;
+        }
+    }
+    if (sleep == 0) // preemption
+    {
+        kqueue_push(&rr_queue, (uint32_t)curtask);
+    }
+    task_t *nextask = (task_t *)kqueue_peek(&rr_queue);
+    eip_buffer = nextask->eip;
+    ebp_buffer = nextask->ebp;
+    esp_buffer = nextask->esp;
+    current_task = nextask;
+    current_page_directory = current_task->page_dir;
+    asm_multsk_switch();
+}
+
+void multsk_terminate()
+{
+    multsk_switch(2);
 }
 
 uint32_t multsk_fork()
@@ -57,6 +72,7 @@ uint32_t multsk_fork()
     if (newtask->eip != 0xffffffff)
     {
         newtask->page_dir = page_directory_clone(curtask->page_dir);
+        newtask->table = fd_table_clone(&curtask->table);
         kqueue_push(&rr_queue, (uint32_t)newtask);
     }
     uint32_t pid = multk_getpid();
@@ -72,17 +88,47 @@ task_t *multsk_curtask()
 {
     return (task_t *)kqueue_peek(&rr_queue);
 }
+
+fd_table init_fdt()
+{
+    fd_table table = fd_table_create(2);
+
+    fd_t stdin;
+    stdin.access = FD_ACCESS_READ;
+    stdin.ptr = NULL;
+    stdin.kind = FD_KIND_STDIN;
+    stdin.isopen = 1;
+
+    fd_t stdout;
+    stdout.access = FD_ACCESS_WRITE;
+    stdout.ptr = NULL;
+    stdout.kind = FD_KIND_STDOUT;
+    stdout.isopen = 1;
+
+    fd_table_add(&table, stdin);
+    fd_table_add(&table, stdout);
+
+    return table;
+}
+
+void multsk_free(task_t *task)
+{
+    kfree(&task->table);
+    kfree(task->page_dir);
+}
+
 void multsk_init()
 {
     task_t *first = kmalloc(sizeof(task_t));
     first->pid = task_count++;
     first->page_dir = current_page_directory;
-    first->kernel_stack = (uint32_t)kmalloc_a(KERNEL_STACK_SIZE);
+    // first->kernel_stack = (uint32_t)kmalloc_a(KERNEL_STACK_SIZE);
     rr_queue = kqueue_new();
     kqueue_push(&rr_queue, (uint32_t)first);
     current_task = first;
     tss_entry.esp0 = kernel_stack_ptr + KERNEL_STACK_SIZE;
     multsk_flag = 1;
+    first->table = init_fdt();
     load_int_handler(INTCODE_PIC, multsk_timer);
 }
 

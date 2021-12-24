@@ -13,6 +13,11 @@
 #define CHOP_RELOC 2
 #define CHOP_RENAME 3
 
+#define FS_ERR_DELETED -1
+#define FS_ERR_INVALID_PATH -2
+#define FS_ERR_NONEXISTING -3
+#define FS_ERR_DIR_HAS_CHILD -4
+
 typedef uint32_t lba28_t;
 
 typedef enum
@@ -107,9 +112,9 @@ void inodelist_add(inode_t *node);
 
 inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate, uint8_t dir, uint8_t unlink, int8_t *result);
 void fs_close(inode_t *node);
-void fs_write(inode_t *node, const char *str, uint32_t from, uint32_t len);
-uint32_t fs_read(inode_t *node, char *str, uint32_t from, uint32_t len);
-uint32_t fs_readdir(inode_t *node, char *buffer, uint32_t from);
+int32_t fs_write(inode_t *node, const char *str, int32_t from, int32_t len);
+int32_t fs_read(inode_t *node, char *str, int32_t from, int32_t len);
+int32_t fs_readdir(inode_t *node, char *buffer, int32_t from);
 void fs_init();
 
 #endif

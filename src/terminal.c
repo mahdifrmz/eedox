@@ -56,6 +56,10 @@ void term_scrollup(terminal_t *term)
 
 void term_write_char(terminal_t *term, char c)
 {
+    if (c == 0)
+    {
+        return;
+    }
     if (c == '\n')
     {
         term->curcol = 0;

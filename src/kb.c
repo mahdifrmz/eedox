@@ -48,8 +48,10 @@ unsigned char kbchars[128] = {
 };
 
 kstring_t terminal_buffer;
-kstring_t input_buffer;
+kqueue_t input_list;
 task_t *reader_task = NULL;
+
+uint32_t keyboard_input_size = 0;
 
 void keyboard_handler(__attribute__((unused)) registers *regs)
 {
@@ -61,21 +63,23 @@ void keyboard_handler(__attribute__((unused)) registers *regs)
         {
             if (ch == '\b')
             {
-                if (terminal_buffer.size)
+                if (keyboard_input_size)
                 {
+                    keyboard_input_size--;
                     kstring_erase(&terminal_buffer, terminal_buffer.size - 1, 1);
                     term_backspace(&glb_term);
                 }
             }
             else
             {
+                keyboard_input_size++;
                 term_write_char(&glb_term, ch);
                 kstring_push(&terminal_buffer, ch);
                 if (ch == '\n')
                 {
-                    kstring_insert(&input_buffer, input_buffer.size, kstring_str(&terminal_buffer));
-                    kstring_clear(&terminal_buffer);
-                    terminal_buffer.size = 0;
+                    keyboard_input_size = 0;
+                    kqueue_push(&input_list, (uint32_t)kstring_str(&terminal_buffer));
+                    terminal_buffer = kstring_new();
                     if (reader_task && multsk_flag)
                     {
                         multsk_awake(reader_task);
@@ -90,6 +94,6 @@ void keyboard_handler(__attribute__((unused)) registers *regs)
 void keyboard_init()
 {
     terminal_buffer = kstring_new();
-    input_buffer = kstring_new();
+    input_list = kqueue_new();
     load_int_handler(INTCODE_KEYBOARD, keyboard_handler);
 }

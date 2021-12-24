@@ -471,11 +471,11 @@ int8_t fs_node_open(pathbuf_t *pathbuf, inode_t **node, inode_t **parent, inode_
         vec_push(&loaded, (uint32_t)ptr);
         if (!ptr->isvalid)
         {
-            res = -1; // path not existing
+            res = -1;
         }
         else if (ptr->type == inode_type_file)
         {
-            res = -2; // was not dir
+            res = -1;
         }
         krwlock_release(&ptr->_lock);
         if (res != 0)
@@ -545,7 +545,7 @@ inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate, uint8_t d
     int8_t rsl = fs_node_open(pathbuf, &node, &parent, &gparent);
     if (rsl != 0)
     {
-        *result = -1; // invalid path
+        *result = FS_ERR_INVALID_PATH;
         return NULL;
     }
     fs_node_wrlock(gparent);
@@ -563,20 +563,20 @@ inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate, uint8_t d
         }
         else
         {
-            *result = -2; // file not existing
+            *result = FS_ERR_NONEXISTING;
         }
     }
     else
     {
         if (dir != is_dir)
         {
-            *result = -3; // invalid type
+            *result = FS_ERR_INVALID_PATH;
         }
         if (unlink)
         {
             if (is_dir && node->child_count > 0)
             {
-                *result = -4; // attemp to remove directory with children
+                *result = FS_ERR_DIR_HAS_CHILD;
             }
             inode_delete(node, parent);
         }
@@ -595,31 +595,57 @@ inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate, uint8_t d
     return node;
 }
 
-void fs_write(inode_t *node, const char *str, uint32_t from, uint32_t len)
+int32_t fs_write(inode_t *node, const char *str, int32_t from, int32_t len)
 {
     inode_t *parent = node->_parent;
-
+    int32_t ret;
     fs_node_wrlock(parent);
     fs_node_wrlock(node);
-    inode_write(node, from, str, len, parent);
+    if (node->isvalid)
+    {
+        inode_write(node, from, str, len, parent);
+        ret = len;
+    }
+    else
+    {
+        ret = FS_ERR_DELETED;
+    }
     fs_node_unlock(parent);
     fs_node_unlock(node);
     fs_close(parent);
+    return ret;
 }
 
-uint32_t fs_read(inode_t *node, char *str, uint32_t from, uint32_t len)
+int32_t fs_read(inode_t *node, char *str, int32_t from, int32_t len)
 {
+    int32_t ret;
     fs_node_rdlock(node);
-    uint32_t count = inode_read(node, from, str, len);
+    if (node->isvalid)
+    {
+        ret = inode_read(node, from, str, len);
+    }
+    else
+    {
+        ret = FS_ERR_DELETED;
+    }
     fs_node_unlock(node);
-    return count;
+    return ret;
 }
 
-uint32_t fs_readdir(inode_t *node, char *buffer, uint32_t from)
+int32_t fs_readdir(inode_t *node, char *buffer, int32_t from)
 {
+    int32_t ret;
     fs_node_rdlock(node);
-    return inode_readdir(node, from, buffer);
+    if (node->isvalid)
+    {
+        ret = inode_readdir(node, from, buffer);
+    }
+    else
+    {
+        ret = FS_ERR_DELETED;
+    }
     fs_node_unlock(node);
+    return ret;
 }
 
 void fs_init()

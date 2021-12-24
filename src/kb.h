@@ -12,6 +12,6 @@ void keyboard_init();
 
 extern terminal_t glb_term;
 extern task_t *reader_task;
-extern kstring_t input_buffer;
+extern kqueue_t input_list;
 
 #endif
