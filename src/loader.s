@@ -40,7 +40,7 @@ align 4                         ; the code must be 4 byte aligned
     dd  end                       ; End of kernel.
     dd  loader
 
-section .text:                     ; Kernel entry point (initial EIP).
+section .text                     ; Kernel entry point (initial EIP).
 loader:                         ; the loader label (defined as entry point in linker script)
     mov esp, initial_stack + INITIAL_STACK_SIZE
     mov ebp, esp
@@ -95,5 +95,5 @@ user_write:
     pop ebp 
     ret
 
-section .bss:
+section .bss
     initial_stack resb INITIAL_STACK_SIZE

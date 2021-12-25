@@ -3,11 +3,11 @@
     global set_interrupt_handler
     global set_irq_handler
 
-section .data:
+section .data
     interrupt_handler dd 0x0 
     irq_handler dd 0x0
 
-section .text:
+section .text
 
 %macro IRQ 1
     global each_irq_handler_%1
