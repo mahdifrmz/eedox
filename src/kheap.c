@@ -129,7 +129,7 @@ void *heap_alloc(heap_t *heap, uint32_t size, uint8_t align)
 {
     if (size == 0)
     {
-        return 0x0;
+        return NULL;
     }
     // find the best hole
     uint32_t best_index = 0;
@@ -195,6 +195,10 @@ void *heap_alloc(heap_t *heap, uint32_t size, uint8_t align)
 
 void heap_free(heap_t *heap, void *ptr)
 {
+    if (!ptr)
+    {
+        return;
+    }
     hheader_t *block = (hheader_t *)((uint32_t)ptr - sizeof(hheader_t));
     block->is_hole = 1;
     ordlist_insert(&heap->index, block);
