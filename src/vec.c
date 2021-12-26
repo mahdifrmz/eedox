@@ -1,4 +1,5 @@
 #include <vec.h>
+#include <util.h>
 
 #define VEC_INIT_CAP 4
 
@@ -13,7 +14,7 @@ vec_t vec_new_sh(uint32_t size, heap_t *heap)
 {
     vec_t vec;
     vec.size = 0;
-    vec.cap = size;
+    vec.cap = max(1, size);
     vec.heap = heap;
     vec.buffer = vec_alloc(&vec, vec.cap);
     return vec;
@@ -105,7 +106,7 @@ void vec_resize(vec_t *vec, uint32_t size)
     if (size >= vec->size)
     {
         uint32_t *newbuffer = vec_alloc(vec, size);
-        memcpy(newbuffer, vec->buffer, vec->size);
+        memcpy(newbuffer, vec->buffer, vec->size * 4);
         heap_free(vec->heap, vec->buffer);
         vec->buffer = newbuffer;
         vec->cap = size;

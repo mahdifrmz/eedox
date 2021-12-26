@@ -17,7 +17,12 @@ pathbuf_t pathbuf_copy(pathbuf_t *buf)
     newbuf.back = buf->back;
     newbuf.is_absolute = buf->is_absolute;
     newbuf.is_expldir = buf->is_expldir;
-    newbuf.fields = vec_copy(&buf->fields);
+    newbuf.fields = vec_new_s(buf->fields.size);
+    for (uint32_t i = 0; i < buf->fields.size; i++)
+    {
+        char *str = strdup((char *)buf->fields.buffer[i]);
+        vec_push(&newbuf.fields, (uint32_t)str);
+    }
     return newbuf;
 }
 pathbuf_t pathbuf_parse(const char *address)
@@ -151,11 +156,31 @@ char *pathbuf_name(pathbuf_t *buf)
 
 pathbuf_t pathbuf_parent(pathbuf_t *buf)
 {
-    pathbuf_t par = pathbuf_copy(buf);
-    if (par.fields.size)
+    pathbuf_t newbuf;
+    newbuf.back = buf->back;
+    newbuf.is_absolute = buf->is_absolute;
+    newbuf.is_expldir = 1;
+    newbuf.fields = vec_new_s(buf->fields.size);
+    for (uint32_t i = 0; i < buf->fields.size - 1; i++)
     {
-        vec_pop(&par.fields);
+        char *str = strdup((char *)buf->fields.buffer[i]);
+        vec_push(&newbuf.fields, (uint32_t)str);
     }
-    par.is_expldir = 1;
-    return par;
+    return newbuf;
+}
+
+pathbuf_t pathbuf_child(pathbuf_t *buf, const char *name, uint8_t expldir)
+{
+    pathbuf_t newbuf;
+    newbuf.back = buf->back;
+    newbuf.is_absolute = buf->is_absolute;
+    newbuf.is_expldir = expldir;
+    newbuf.fields = vec_new_s(buf->fields.size + 1);
+    for (uint32_t i = 0; i < buf->fields.size; i++)
+    {
+        char *str = strdup((char *)buf->fields.buffer[i]);
+        vec_push(&newbuf.fields, (uint32_t)str);
+    }
+    vec_push(&newbuf.fields, (uint32_t)strdup(name));
+    return newbuf;
 }

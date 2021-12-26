@@ -54,9 +54,11 @@ typedef struct
 {
     uint32_t bytes_from;
     uint32_t bytes_count;
+    uint32_t bytes_read;
     lba28_t sec_from;
     lba28_t sec_count;
     lba28_t sec_overflow;
+    lba28_t sec_read;
     uint32_t bytes_overflow;
 
 } operation_bounds;
@@ -90,7 +92,7 @@ void inode_fetch(lba28_t index, inode_t *node);
 inode_t *inode_parent(inode_t *parent);
 void inode_calculate_operation_bounds(inode_t *node, operation_bounds *operation);
 void inode_realloc(inode_t *node, uint32_t sectors, inode_t *parent);
-inode_t *inode_new(pathbuf_t *pathbuf);
+inode_t *inode_new(pathbuf_t pathbuf);
 uint32_t inode_read(inode_t *node, uint32_t from, char *buffer, uint32_t count);
 uint32_t inode_readdir(inode_t *node, uint32_t from, char *buffer);
 void inode_write(inode_t *node, uint32_t from, const char *buffer, uint32_t count, inode_t *parent);

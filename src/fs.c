@@ -101,23 +101,24 @@ void inode_write(inode_t *node, uint32_t from, const char *buffer, uint32_t coun
     op.bytes_from = from;
     op.bytes_count = count;
     inode_calculate_operation_bounds(node, &op);
+
     if (op.sec_overflow)
     {
         inode_realloc(node, op.sec_overflow + node->alloc, parent);
         inode_calculate_operation_bounds(node, &op);
     }
+
     if (op.bytes_overflow)
     {
         node->size += op.bytes_overflow;
         inode_update(node);
     }
     char *blocks = kmalloc(SECTOR_SIZE * op.sec_count);
-    uint32_t blocks_count = op.sec_count - op.sec_overflow;
-    for (lba28_t i = 0; i < blocks_count; i++)
+    for (lba28_t i = 0; i < op.sec_read; i++)
     {
         ata_read(op.sec_from + i, blocks + i * SECTOR_SIZE);
     }
-    memcpy(blocks + from, buffer, count);
+    memcpy(blocks + (from % 512), buffer, count);
     for (lba28_t i = 0; i < op.sec_count; i++)
     {
         ata_write(op.sec_from + i, blocks + i * SECTOR_SIZE);
@@ -141,16 +142,15 @@ uint32_t inode_read(inode_t *node, uint32_t from, char *buffer, uint32_t count)
     op.bytes_count = count;
     inode_calculate_operation_bounds(node, &op);
 
-    uint32_t blocks_count = op.sec_count - op.sec_overflow;
-    char *blocks = kmalloc(SECTOR_SIZE * max(1, blocks_count));
-    for (lba28_t i = 0; i < blocks_count; i++)
+    char *blocks = kmalloc(SECTOR_SIZE * max(1, op.sec_read));
+    for (lba28_t i = 0; i < op.sec_read; i++)
     {
         ata_read(op.sec_from + i, blocks + i * SECTOR_SIZE);
     }
 
-    memcpy(buffer, blocks + from, count - op.bytes_overflow);
+    memcpy(buffer, blocks + (from % 512), op.bytes_read);
     kfree(blocks);
-    return count - op.bytes_overflow;
+    return op.bytes_read;
 }
 uint32_t inode_readdir(inode_t *node, uint32_t from, char *buffer)
 {
@@ -230,19 +230,23 @@ void inode_calculate_operation_bounds(inode_t *node, operation_bounds *operation
     if (sec_to > node->index + 1 + node->alloc)
     {
         operation->sec_overflow = sec_to - (node->index + 1 + node->alloc);
+        operation->sec_read = (node->index + 1 + node->alloc) - operation->sec_from;
     }
     else
     {
         operation->sec_overflow = 0;
+        operation->sec_read = operation->sec_count;
     }
 
     if (bytes_to > node->size)
     {
         operation->bytes_overflow = bytes_to - node->size;
+        operation->bytes_read = node->size - operation->bytes_from;
     }
     else
     {
         operation->bytes_overflow = 0;
+        operation->bytes_read = operation->bytes_count;
     }
 }
 void inode_realloc(inode_t *node, uint32_t sectors, inode_t *parent)
@@ -284,12 +288,12 @@ void inode_update(inode_t *node)
 {
     ata_write(node->index, node);
 }
-inode_t *inode_new(pathbuf_t *pathbuf)
+inode_t *inode_new(pathbuf_t pathbuf)
 {
     inode_t *node = kmalloc(SECTOR_SIZE);
     node->_refs = 1;
     node->_parent = NULL;
-    node->_pathbuf = pathbuf_copy(pathbuf);
+    node->_pathbuf = pathbuf;
     inodelist_add(node);
     krwlock_init(&node->_lock);
     return node;
@@ -430,8 +434,7 @@ inode_t *fs_node_child(inode_t *node, const char *name)
     {
         return NULL;
     }
-    pathbuf_t pathbuf = pathbuf_copy(&node->_pathbuf);
-    vec_push(&pathbuf.fields, (uint32_t)name);
+    pathbuf_t pathbuf = pathbuf_child(&node->_pathbuf, name, 1);
     inode_t *child = inodelist_get(&pathbuf);
     if (child)
     {
@@ -443,7 +446,7 @@ inode_t *fs_node_child(inode_t *node, const char *name)
     {
         return child;
     }
-    child = inode_new(&pathbuf);
+    child = inode_new(pathbuf);
     krwlock_write(&child->_lock);
     inode_child(node, name, child);
     krwlock_release(&node->_lock);
@@ -668,8 +671,7 @@ void fs_init()
 
     inodelist = vec_new();
     pathbuf_t root_path = pathbuf_root();
-    inode_t *node_buffer = inode_new(&root_path);
-    pathbuf_free(&root_path);
+    inode_t *node_buffer = inode_new(root_path);
     inode_fetch(root_index, node_buffer);
 
     if (!node_buffer->isvalid)

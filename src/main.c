@@ -110,16 +110,27 @@ void writefs()
 
     pathbuf_t path = pathbuf_parse("/firstborn");
     inode_t *fb = fs_open(&path, 1, 0, 0, 0, &res);
-
+    if (res != 0)
+    {
+        kprintf("failed to open firstborn!\n");
+    }
     fs_write(fb, "salamski", 0, 8);
 
     pathbuf_t fpath = pathbuf_parse("/ffol/");
-    inode_t *ff = fs_open(&fpath, 1, 0, 1, 0, &res);
+    _unused inode_t *ff = fs_open(&fpath, 1, 0, 1, 0, &res);
+    if (res != 0)
+    {
+        kprintf("failed to open ffol!\n");
+    }
 
     pathbuf_t vpath = pathbuf_parse("/ffol/VECHE");
-    inode_t *vf = fs_open(&vpath, 1, 0, 0, 0, &res);
+    _unused inode_t *vf = fs_open(&vpath, 1, 0, 0, 0, &res);
+    if (res != 0)
+    {
+        kprintf("failed to open VECHE!\n");
+    }
 
-    const char *vbuf = "slavovich poniatowski II\n";
+    _unused const char *vbuf = "slavovich poniatowski II\n";
     inode_write(vf, 11, vbuf, strlen(vbuf), ff);
 
     fs_close(fb);

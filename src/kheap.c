@@ -1,5 +1,6 @@
 #include <kheap.h>
 #include <util.h>
+#include <kutil.h>
 
 int8_t compare_headers(uint32_t a, uint32_t b)
 {

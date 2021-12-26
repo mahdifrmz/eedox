@@ -122,7 +122,6 @@ void multsk_init()
     task_t *first = kmalloc(sizeof(task_t));
     first->pid = task_count++;
     first->page_dir = current_page_directory;
-    // first->kernel_stack = (uint32_t)kmalloc_a(KERNEL_STACK_SIZE);
     rr_queue = kqueue_new();
     kqueue_push(&rr_queue, (uint32_t)first);
     current_task = first;
