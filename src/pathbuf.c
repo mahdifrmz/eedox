@@ -97,7 +97,8 @@ pathbuf_t pathbuf_join(pathbuf_t *buf1, pathbuf_t *buf2)
     {
         if (res.fields.size)
         {
-            vec_pop(&res.fields);
+            char *f = (char *)vec_pop(&res.fields);
+            kfree(f);
         }
         else if (!res.is_absolute)
         {
@@ -106,7 +107,7 @@ pathbuf_t pathbuf_join(pathbuf_t *buf1, pathbuf_t *buf2)
     }
     for (uint32_t i = 0; i < buf2->fields.size; i++)
     {
-        vec_push(&res.fields, buf2->fields.buffer[i]);
+        vec_push(&res.fields, (uint32_t)strdup((char *)buf2->fields.buffer[i]));
     }
     res.is_expldir = buf2->is_expldir;
     return res;

@@ -30,7 +30,7 @@ void syscalls_handle(registers *regs)
 {
     if (regs->eax == SYSCALL_EXIT)
     {
-        regs->eax = syscall_exit();
+        regs->eax = syscall_exit(regs);
     }
     if (regs->eax == SYSCALL_WRITE)
     {
@@ -60,10 +60,57 @@ void syscalls_handle(registers *regs)
     {
         regs->eax = syscall_setcwd(regs);
     }
+    else if (regs->eax == SYSCALL_WAIT)
+    {
+        regs->eax = syscall_wait(regs);
+    }
+    else if (regs->eax == SYSCALL_WAITPID)
+    {
+        regs->eax = syscall_waitpid(regs);
+    }
     else if (regs->eax == 0xffffffff)
     {
         syscall_test();
     }
+}
+
+int32_t syscall_wait(registers *regs)
+{
+    int16_t *stref = (int16_t *)regs->ebx;
+
+    task_t *task = multsk_curtask();
+    task_t *child = multsk_find_zombie(task);
+    if (!child)
+    {
+        task->status = -3;
+        multsk_sleep();
+        child = task->chwait;
+    }
+    *stref = child->status;
+    uint32_t child_pid = child->pid;
+    multsk_killtask(child);
+    return child_pid;
+}
+
+int32_t syscall_waitpid(registers *regs)
+{
+    uint32_t child_pid = regs->ebx;
+    int16_t *stref = (int16_t *)regs->ecx;
+
+    task_t *task = multsk_curtask();
+    task_t *child = multsk_gettask(child_pid);
+    if (!child || task->parent != task)
+    {
+        return SYSCALL_ERR_INVAL_CHILDPID;
+    }
+    if (child->status == -1)
+    {
+        child->status = -2;
+        multsk_sleep();
+    }
+    *stref = child->status;
+    multsk_killtask(child);
+    return child_pid;
 }
 
 int32_t syscall_getcwd(registers *regs)
@@ -96,9 +143,21 @@ int32_t syscall_setcwd(registers *regs)
     return 0;
 }
 
-int32_t syscall_exit()
+int32_t syscall_exit(registers *regs)
 {
-    multsk_terminate();
+
+    int16_t statuscode = regs->ebx;
+    task_t *task = multsk_curtask();
+    task_t *parent = task->parent;
+    if ((task->status == -1 && parent->status == -3) || task->status == -2)
+    {
+
+        parent->chwait = task;
+        parent->status = -1;
+        multsk_awake(parent);
+    }
+    task->status = statuscode;
+    multsk_sleep();
     return 0;
 }
 

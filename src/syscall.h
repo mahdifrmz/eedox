@@ -16,6 +16,8 @@ extern uint32_t kernel_memory_end;
 #define SYSCALL_FORK 10
 #define SYSCALL_GETCWD 11
 #define SYSCALL_SETCWD 12
+#define SYSCALL_WAITPID 13
+#define SYSCALL_WAIT 14
 
 #define SYSCALL_ERR_INVALID_FD -1
 #define SYSCALL_ERR_WRITEONLY -2
@@ -26,6 +28,7 @@ extern uint32_t kernel_memory_end;
 #define SYSCALL_ERR_NONEXISTING -7
 #define SYSCALL_ERR_HAS_CHILD -8
 #define SYSCALL_ERR_INVALID_LOAD_ADDRESS -9
+#define SYSCALL_ERR_INVAL_CHILDPID -10
 
 void syscall_test();
 int32_t syscall_translate_fs_err(int32_t err);
@@ -41,7 +44,9 @@ int32_t syscall_write(registers *regs);
 int32_t syscall_getcwd(registers *regs);
 int32_t syscall_setcwd(registers *regs);
 int32_t syscall_exec(registers *regs);
-int32_t syscall_exit();
+int32_t syscall_exit(registers *regs);
+int32_t syscall_wait(registers *regs);
+int32_t syscall_waitpid(registers *regs);
 void syscalls_init();
 
 #endif

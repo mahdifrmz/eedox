@@ -162,7 +162,7 @@ void kmain()
     load_int_handler(INTCODE_GPF, GPF_handler);
 
     uint32_t pid = multsk_fork();
-    if (!pid)
+    if (pid == 1)
     {
         return;
     }

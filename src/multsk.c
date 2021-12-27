@@ -4,6 +4,7 @@
 #include <asm.h>
 
 #define KERNEL_STACK_SIZE 0x2000
+#define INIT_PID 1
 
 kqueue_t rr_queue;
 uint32_t eip_buffer, esp_buffer, ebp_buffer;
@@ -14,6 +15,7 @@ uint32_t task_count = 0;
 task_t *current_task;
 uint32_t kernel_stack_ptr;
 uint32_t user_stack_ptr;
+vec_t tasklist; // keeps task_t* pointers
 
 uint32_t multk_getpid()
 {
@@ -71,13 +73,21 @@ uint32_t multsk_fork()
     newtask->eip = asm_get_eip();
     if (newtask->eip != 0xffffffff)
     {
+        newtask->status = 0;
         newtask->page_dir = page_directory_clone(curtask->page_dir);
         newtask->table = fd_table_clone(&curtask->table);
         kqueue_push(&rr_queue, (uint32_t)newtask);
         newtask->cwd = pathbuf_copy(&curtask->cwd);
+        newtask->parent = curtask;
+        newtask->chwait = NULL;
+        newtask->status = -1;
+        vec_push(&tasklist, (uint32_t)newtask);
+        return newtask->pid;
     }
-    uint32_t pid = multk_getpid();
-    return pid;
+    else
+    {
+        return 0;
+    }
 }
 
 void multsk_awake(task_t *task)
@@ -119,9 +129,48 @@ void multsk_free(task_t *task)
     kfree(task->page_dir);
 }
 
+task_t *multsk_gettask(uint32_t pid)
+{
+    return (task_t *)tasklist.buffer[pid];
+}
+
+void multsk_killtask(task_t *task)
+{
+    uint32_t pid = task->pid;
+    multsk_orphan_all(task);
+    multsk_free(task);
+    tasklist.buffer[pid] = 0;
+}
+
+task_t *multsk_find_zombie(task_t *task)
+{
+    for (uint32_t i = 0; i < tasklist.size; i++)
+    {
+        task_t *child = (task_t *)tasklist.buffer[i];
+        if (child->parent == task && child->status > 0)
+        {
+            return child;
+        }
+    }
+    return NULL;
+}
+
+void multsk_orphan_all(task_t *task)
+{
+    for (uint32_t i = 0; i < tasklist.size; i++)
+    {
+        task_t *child = (task_t *)tasklist.buffer[i];
+        if (child->parent == task)
+        {
+            child->parent = (task_t *)tasklist.buffer[INIT_PID];
+        }
+    }
+}
+
 void multsk_init()
 {
     task_t *first = kmalloc(sizeof(task_t));
+    tasklist = vec_new();
     first->pid = task_count++;
     first->page_dir = current_page_directory;
     rr_queue = kqueue_new();
@@ -131,6 +180,10 @@ void multsk_init()
     multsk_flag = 1;
     first->table = init_fdt();
     first->cwd = pathbuf_root();
+    first->status = -1;
+    first->chwait = NULL;
+    first->parent = NULL;
+    vec_push(&tasklist, (uint32_t)first);
     load_int_handler(INTCODE_PIC, multsk_timer);
 }
 

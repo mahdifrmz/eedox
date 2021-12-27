@@ -420,11 +420,13 @@ lba28_t childtable_get(childtable_t *table, const char *name)
 
 void fs_close(inode_t *node)
 {
-    fs_node_close(node);
+    inode_t *parent = NULL;
     if (node)
     {
-        fs_node_close(node);
+        parent = node->_parent;
     }
+    fs_node_close(node);
+    fs_node_close(parent);
 }
 
 inode_t *fs_node_child(inode_t *node, const char *name)
@@ -624,7 +626,7 @@ int32_t fs_write(inode_t *node, const char *str, int32_t from, int32_t len)
     }
     fs_node_unlock(parent);
     fs_node_unlock(node);
-    fs_close(parent);
+    fs_node_close(parent);
     return ret;
 }
 
