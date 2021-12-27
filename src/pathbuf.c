@@ -184,3 +184,23 @@ pathbuf_t pathbuf_child(pathbuf_t *buf, const char *name, uint8_t expldir)
     vec_push(&newbuf.fields, (uint32_t)strdup(name));
     return newbuf;
 }
+
+char *pathbuf_stringify(pathbuf_t *buf)
+{
+    kstring_t strep = kstring_new();
+    if (buf->is_absolute)
+    {
+        kstring_push(&strep, '/');
+    }
+    for (uint32_t i = 0; i < buf->back; i++)
+    {
+        kstring_append(&strep, "../");
+    }
+    for (uint32_t i = 0; i < buf->fields.size; i++)
+    {
+        kstring_append(&strep, pathbuf_field(buf, i));
+        kstring_push(&strep, '/');
+    }
+    kstring_fit(&strep);
+    return kstring_str(&strep);
+}

@@ -52,14 +52,48 @@ void syscalls_handle(registers *regs)
     {
         regs->eax = syscall_close(regs);
     }
-    else if (regs->eax == SYSCALL_OPEN)
+    else if (regs->eax == SYSCALL_GETCWD)
     {
-        regs->eax = syscall_open(regs);
+        regs->eax = syscall_getcwd(regs);
+    }
+    else if (regs->eax == SYSCALL_SETCWD)
+    {
+        regs->eax = syscall_setcwd(regs);
     }
     else if (regs->eax == 0xffffffff)
     {
         syscall_test();
     }
+}
+
+int32_t syscall_getcwd(registers *regs)
+{
+    task_t *task = multsk_curtask();
+    char *cwd = pathbuf_stringify(&task->cwd);
+    char *buffer = (char *)regs->ebx;
+    strcpy(buffer, cwd);
+    buffer[strlen(cwd)] = 0;
+    kfree(cwd);
+    return 0;
+}
+
+int32_t syscall_setcwd(registers *regs)
+{
+    task_t *task = multsk_curtask();
+    pathbuf_t cwd = pathbuf_parse((const char *)regs->ebx);
+    if (!cwd.is_absolute)
+    {
+        cwd = pathbuf_join(&task->cwd, &cwd);
+    }
+    int8_t res;
+    inode_t *dir = fs_open(&cwd, 0, 0, 1, 0, &res);
+    fs_close(dir);
+    if (res != 0)
+    {
+        return syscall_translate_fs_err(res);
+    }
+    task->cwd = cwd;
+    return 0;
 }
 
 int32_t syscall_exit()

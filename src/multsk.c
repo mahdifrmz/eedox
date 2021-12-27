@@ -74,6 +74,7 @@ uint32_t multsk_fork()
         newtask->page_dir = page_directory_clone(curtask->page_dir);
         newtask->table = fd_table_clone(&curtask->table);
         kqueue_push(&rr_queue, (uint32_t)newtask);
+        newtask->cwd = pathbuf_copy(&curtask->cwd);
     }
     uint32_t pid = multk_getpid();
     return pid;
@@ -113,6 +114,7 @@ fd_table init_fdt()
 
 void multsk_free(task_t *task)
 {
+    pathbuf_free(&task->cwd);
     kfree(&task->table);
     kfree(task->page_dir);
 }
@@ -128,6 +130,7 @@ void multsk_init()
     tss_entry.esp0 = kernel_stack_ptr + KERNEL_STACK_SIZE;
     multsk_flag = 1;
     first->table = init_fdt();
+    first->cwd = pathbuf_root();
     load_int_handler(INTCODE_PIC, multsk_timer);
 }
 

@@ -7,6 +7,8 @@
 #define STDIN 0
 
 int32_t write(int32_t fd, const void *buffer, int32_t length);
+int32_t getcwd(char *buffer);
+int32_t setcwd(const char *buffer);
 int32_t exit();
 
 #endif

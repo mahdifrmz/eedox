@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <paging.h>
 #include <descriptor.h>
+#include <pathbuf.h>
 
 #define KERNEL_STACK_SIZE 0x2000
 #define USER_STACK_SIZE 0x2000
@@ -20,6 +21,7 @@ typedef struct
     page_directory_t *page_dir;
     uint32_t kernel_stack;
     fd_table table;
+    pathbuf_t cwd;
 
 } task_t;
 

@@ -14,6 +14,8 @@ extern uint32_t kernel_memory_end;
 #define SYSCALL_CLOSE 5
 #define SYSCALL_EXEC 9
 #define SYSCALL_FORK 10
+#define SYSCALL_GETCWD 11
+#define SYSCALL_SETCWD 12
 
 #define SYSCALL_ERR_INVALID_FD -1
 #define SYSCALL_ERR_WRITEONLY -2
@@ -36,6 +38,8 @@ int32_t syscall_read(registers *regs);
 int32_t syscall_write_disk(fd_t *fd, const char *ptr, int32_t len);
 int32_t syscall_write_stdout(const char *ptr, int32_t len);
 int32_t syscall_write(registers *regs);
+int32_t syscall_getcwd(registers *regs);
+int32_t syscall_setcwd(registers *regs);
 int32_t syscall_exec(registers *regs);
 int32_t syscall_exit();
 void syscalls_init();

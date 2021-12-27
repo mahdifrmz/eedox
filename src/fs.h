@@ -107,6 +107,7 @@ void fs_node_unlock(inode_t *node);
 inode_t *fs_node_child(inode_t *node, const char *name);
 inode_t *fs_node_root();
 int8_t fs_node_open(pathbuf_t *pathbuf, inode_t **node, inode_t **parent, inode_t **gparent);
+void fs_node_close(inode_t *node);
 
 inode_t *inodelist_get(pathbuf_t *pathbuf);
 void inodelist_remove(inode_t *node);

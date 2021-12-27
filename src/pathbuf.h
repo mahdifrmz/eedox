@@ -14,6 +14,7 @@ typedef struct
 pathbuf_t pathbuf_root();
 void pathbuf_free(pathbuf_t *buf);
 pathbuf_t pathbuf_parse(const char *address);
+char *pathbuf_stringify(pathbuf_t *buf);
 pathbuf_t pathbuf_join(pathbuf_t *buf1, pathbuf_t *buf2);
 pathbuf_t pathbuf_copy(pathbuf_t *buf);
 char *pathbuf_field(pathbuf_t *buf, uint32_t index);

@@ -420,11 +420,10 @@ lba28_t childtable_get(childtable_t *table, const char *name)
 
 void fs_close(inode_t *node)
 {
-    if (node && --node->_refs == 0)
+    fs_node_close(node);
+    if (node)
     {
-        inodelist_remove(node);
-        pathbuf_free(&node->_pathbuf);
-        kfree(node);
+        fs_node_close(node);
     }
 }
 
@@ -460,6 +459,16 @@ inode_t *fs_node_root()
     inode_t *node = (inode_t *)inodelist.buffer[0];
     node->_refs++;
     return node;
+}
+
+void fs_node_close(inode_t *node)
+{
+    if (node && --node->_refs == 0)
+    {
+        inodelist_remove(node);
+        pathbuf_free(&node->_pathbuf);
+        kfree(node);
+    }
 }
 
 int8_t fs_node_open(pathbuf_t *pathbuf, inode_t **node, inode_t **parent, inode_t **gparent)
@@ -510,7 +519,7 @@ int8_t fs_node_open(pathbuf_t *pathbuf, inode_t **node, inode_t **parent, inode_
     }
     for (uint32_t i = 0; i < loaded.size; i++)
     {
-        fs_close((inode_t *)loaded.buffer[i]);
+        fs_node_close((inode_t *)loaded.buffer[i]);
     }
     vec_free(&loaded);
     return res;
@@ -594,7 +603,7 @@ inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate, uint8_t d
     fs_node_unlock(gparent);
     fs_node_unlock(parent);
     fs_node_unlock(node);
-    fs_close(gparent);
+    fs_node_close(gparent);
     return node;
 }
 
