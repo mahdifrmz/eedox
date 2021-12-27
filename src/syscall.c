@@ -5,10 +5,9 @@
 #include <lock.h>
 #include <kb.h>
 #include <fs.h>
+#include <prog.h>
 
 ksemaphore_t reader_lock;
-
-void syscall_test();
 
 int32_t syscall_translate_fs_err(int32_t err)
 {
@@ -44,6 +43,10 @@ void syscalls_handle(registers *regs)
     else if (regs->eax == SYSCALL_FORK)
     {
         regs->eax = multsk_fork();
+    }
+    else if (regs->eax == SYSCALL_EXEC)
+    {
+        regs->eax = syscall_exec(regs);
     }
     else if (regs->eax == SYSCALL_CLOSE)
     {
@@ -233,6 +236,34 @@ int32_t syscall_write(registers *regs)
     {
         return syscall_write_disk(fd, ptr, len);
     }
+}
+
+int32_t syscall_exec(registers *regs)
+{
+    pathbuf_t path = pathbuf_parse((char *)regs->ebx);
+    int8_t rres;
+    inode_t *binary = fs_open(&path, 0, 0, 0, 0, &rres);
+    if (rres != 0)
+    {
+        return syscall_translate_fs_err(rres);
+    }
+    uint32_t entry;
+    char *program = kmalloc(binary->size);
+    int32_t rsl = fs_read(binary, program, 0, binary->size);
+    if (rsl < 0)
+    {
+        return syscall_translate_fs_err(rres);
+    }
+    rsl = prog_load(program, kernel_memory_end, &entry);
+    kfree(program);
+    if (rsl != 0)
+    {
+        return SYSCALL_ERR_INVALID_LOAD_ADDRESS;
+    }
+    regs->eip = entry;
+    regs->esp = user_stack_ptr + USER_STACK_SIZE;
+    regs->ebp = regs->esp;
+    return 0;
 }
 
 void syscalls_init()

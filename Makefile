@@ -1,5 +1,5 @@
 CFLAGS = -g -Isrc -ffreestanding -Wall -Wextra -Werror
-CUSERFLAGS = -g -Iuser -ffreestanding -Wall -Wextra -Werror
+CUSERFLAGS = -Iuser -ffreestanding -Wall -Wextra -Werror
 OBJECTS =\
 	build/multsk.o \
 	build/kqueue.o \
@@ -24,6 +24,7 @@ OBJECTS =\
 	build/ata.o \
 	build/pathbuf.o \
 	build/fs.o \
+	build/prog.o \
 	build/descriptor.o
 
 USER_BINS =\
@@ -41,8 +42,10 @@ QEMU_FLAGS = -drive file=build/vdsk.img,format=raw,index=0,media=disk
 build/os.iso: build/kernel build/vdsk.img
 	grub-mkrescue -o $@ iso
 
-build/vdsk.img: ${USER_BINS}
+build/vdsk.img: ${USER_BINS} fsgen.py
 	qemu-img create -fraw build/vdsk.img 16m
+	python3 fsgen.py build/binaries build/user/helloworld
+	dd if=build/binaries of=build/vdsk.img conv=notrunc
 
 build/kernel: ${OBJECTS} link.ld
 	ld -T link.ld -m elf_i386 ${OBJECTS} -o $@
@@ -50,13 +53,13 @@ build/kernel: ${OBJECTS} link.ld
 
 build/user/libstd.a: ${STDLIB_SRC}
 	i686-elf-gcc ${CUSERFLAGS} -c user/stdlib.c -o build/user/stdlib.o 
-	i686-elf-gcc ${CFLAGS} -c src/util.c -o build/user/util.o
+	i686-elf-gcc ${CUSERFLAGS} -Isrc -c src/util.c -o build/user/util.o
 	nasm -f elf32 -o build/user/asmlib.o user/asmlib.s
 	ar rcs build/user/libstd.a build/user/asmlib.o build/user/stdlib.o build/user/util.o
 
 build/user/%: user/%.c build/user/libstd.a
 	i686-elf-gcc ${CUSERFLAGS} -c $< -o $@.o
-	ld -m elf_i386 --entry=main -o $@ $@.o -Lbuild/user -lstd
+	ld --section-start=.text=0x01400000 -m elf_i386 --entry=main -o $@ $@.o -Lbuild/user -lstd
 
 build/%.o: src/%.s
 	nasm -g -f elf32 -o $@ $<
@@ -78,7 +81,7 @@ clean:
 	mkdir build
 	mkdir build/user
 img-reset:
-	dd of=build/vdsk.img count=16k bs=1k if=/dev/zero
+	rm -f build/vdsk.img
 
 debug: build/os.iso
 	qemu-system-i386 ${QEMU_FLAGS} -gdb tcp::1234 -cdrom $<

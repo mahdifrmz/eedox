@@ -142,7 +142,7 @@ uint32_t inode_read(inode_t *node, uint32_t from, char *buffer, uint32_t count)
     op.bytes_count = count;
     inode_calculate_operation_bounds(node, &op);
 
-    char *blocks = kmalloc(SECTOR_SIZE * max(1, op.sec_read));
+    char *blocks = kmalloc(op.sec_read * SECTOR_SIZE);
     for (lba28_t i = 0; i < op.sec_read; i++)
     {
         ata_read(op.sec_from + i, blocks + i * SECTOR_SIZE);

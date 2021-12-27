@@ -5,12 +5,14 @@
 #include <multsk.h>
 
 extern uint32_t keyboard_input_size;
+extern uint32_t kernel_memory_end;
 
 #define SYSCALL_EXIT 1
 #define SYSCALL_READ 2
 #define SYSCALL_WRITE 3
 #define SYSCALL_OPEN 4
 #define SYSCALL_CLOSE 5
+#define SYSCALL_EXEC 9
 #define SYSCALL_FORK 10
 
 #define SYSCALL_ERR_INVALID_FD -1
@@ -21,6 +23,7 @@ extern uint32_t keyboard_input_size;
 #define SYSCALL_ERR_INVALID_PATH -6
 #define SYSCALL_ERR_NONEXISTING -7
 #define SYSCALL_ERR_HAS_CHILD -8
+#define SYSCALL_ERR_INVALID_LOAD_ADDRESS -9
 
 void syscall_test();
 int32_t syscall_translate_fs_err(int32_t err);
@@ -33,7 +36,8 @@ int32_t syscall_read(registers *regs);
 int32_t syscall_write_disk(fd_t *fd, const char *ptr, int32_t len);
 int32_t syscall_write_stdout(const char *ptr, int32_t len);
 int32_t syscall_write(registers *regs);
-void syscalls_init();
+int32_t syscall_exec(registers *regs);
 int32_t syscall_exit();
+void syscalls_init();
 
 #endif
