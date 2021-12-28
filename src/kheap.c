@@ -1,6 +1,10 @@
 #include <kheap.h>
 #include <util.h>
 #include <kutil.h>
+#include <heapwatch.h>
+
+heapwatch_t watcher;
+heap_t kernel_heap;
 
 int8_t compare_headers(uint32_t a, uint32_t b)
 {
@@ -22,6 +26,7 @@ int8_t compare_headers(uint32_t a, uint32_t b)
 
 void heap_init(heap_t *heap, void *start, uint32_t size, uint32_t index_size, uint8_t readonly, uint8_t supervisor)
 {
+    heapwatch_init(&watcher);
     heap->size = size;
     heap->readonly = readonly;
     heap->supervisor = supervisor;
@@ -128,6 +133,7 @@ void heap_merge(heap_t *heap, hheader_t *hole)
 
 void *heap_alloc(heap_t *heap, uint32_t size, uint8_t align)
 {
+    heap_check(heap);
     if (size == 0)
     {
         return NULL;
@@ -191,11 +197,17 @@ void *heap_alloc(heap_t *heap, uint32_t size, uint8_t align)
     {
         heap_high_split(heap, best_hole, best_hole->size - size);
     }
-    return (hheader_t *)((uint32_t)best_hole + sizeof(hheader_t));
+    void *ptr = (void *)((uint32_t)best_hole + sizeof(hheader_t));
+
+    heapwatch_alloc(&watcher, (uint32_t)best_hole + sizeof(hheader_t), size);
+    heap_check(heap);
+    return ptr;
 }
 
 void heap_free(heap_t *heap, void *ptr)
 {
+    heap_check(heap);
+    heapwatch_free(&watcher, (uint32_t)ptr);
     if (!ptr)
     {
         return;
@@ -219,4 +231,5 @@ void heap_free(heap_t *heap, void *ptr)
             heap_merge(heap, block);
         }
     }
+    heap_check(heap);
 }

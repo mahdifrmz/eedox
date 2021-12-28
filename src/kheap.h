@@ -23,6 +23,8 @@ typedef struct
     uint8_t supervisor;
 } heap_t;
 
+extern heap_t kernel_heap;
+
 void heap_init(heap_t *heap, void *start, uint32_t size, uint32_t index_size, uint8_t readonly, uint8_t supervisor);
 void *heap_alloc(heap_t *heap, uint32_t size, uint8_t align);
 void heap_free(heap_t *heap, void *ptr);

@@ -125,7 +125,7 @@ fd_table init_fdt()
 void multsk_free(task_t *task)
 {
     pathbuf_free(&task->cwd);
-    kfree(&task->table);
+    kfree(task->table.records);
     kfree(task->page_dir);
 }
 

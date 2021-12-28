@@ -25,7 +25,8 @@ OBJECTS =\
 	build/pathbuf.o \
 	build/fs.o \
 	build/prog.o \
-	build/descriptor.o
+	build/descriptor.o \
+	build/heapwatch.o
 
 USER_BINS =\
 	build/user/helloworld

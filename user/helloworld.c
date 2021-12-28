@@ -16,7 +16,7 @@ void print(const char *message)
 int main()
 {
     int16_t exit_code = 33;
-    // setcwd("/ffol");
+    setcwd("/ffol");
     int32_t pid = fork();
     if (pid != 0)
     {

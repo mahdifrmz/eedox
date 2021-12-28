@@ -17,7 +17,6 @@
 
 terminal_t glb_term;
 gdtrec glb_gdt_records[6];
-heap_t kernel_heap;
 extern uint32_t end;
 tss_rec tss_entry;
 

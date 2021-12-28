@@ -15,14 +15,17 @@ uint32_t fd_table_add(fd_table *table, fd_t fd)
     uint32_t index = 0;
     while (index < table->size && table->records[index].isopen)
         index++;
-    if (index == table->size && table->cap == table->size)
+    if (index == table->size)
     {
-        void *buffer = kmalloc(table->cap *= 2);
-        memcpy(buffer, table->records, table->size * sizeof(fd_t));
-        kfree(table->records);
-        table->records = buffer;
+        if (table->cap == table->size)
+        {
+            void *buffer = kmalloc(table->cap *= 2);
+            memcpy(buffer, table->records, table->size * sizeof(fd_t));
+            kfree(table->records);
+            table->records = buffer;
+        }
+        table->size++;
     }
-    table->size++;
     table->records[index] = fd;
     table->records[index].isopen = 1;
     return index;
@@ -38,7 +41,7 @@ fd_table fd_table_clone(fd_table *table)
     fd_table new_table;
     new_table.cap = table->cap;
     new_table.size = table->size;
-    new_table.records = kmalloc(new_table.cap);
+    new_table.records = kmalloc(new_table.cap * sizeof(fd_t));
     memcpy(new_table.records, table->records, table->size * sizeof(fd_t));
     return new_table;
 }
