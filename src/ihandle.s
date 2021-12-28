@@ -2,6 +2,8 @@
     SEG_DATA equ 0x10
     global set_interrupt_handler
     global set_irq_handler
+    global common_interrupt_handler
+    global set_interrupt_handler
 
 section .data
     interrupt_handler dd 0x0 

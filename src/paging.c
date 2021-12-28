@@ -4,6 +4,7 @@
 #include <kutil.h>
 #include <asm.h>
 #include <idt.h>
+#include <trace.h>
 
 extern heap_t kernel_heap;
 bitset_t glb_frames;
@@ -139,5 +140,7 @@ void page_fault(registers *regs)
     const char *us = regs->err_code & 0x4 ? "user-mode " : "";       // Processor was in user-mode?
     const char *reserved = regs->err_code & 0x8 ? "reserved " : "";  // Overwritten CPU-reserved bits of page entry?
     const char *fetch = regs->err_code & 0x10 ? "fetch " : "";
+
+    trace(regs->eip, regs->ebp);
     kpanic("paging fault [%x] ( %s%s%s%s%s) ", asm_get_cr2(), present, rw, us, reserved, fetch);
 }

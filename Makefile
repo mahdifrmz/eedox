@@ -26,7 +26,8 @@ OBJECTS =\
 	build/fs.o \
 	build/prog.o \
 	build/descriptor.o \
-	build/heapwatch.o
+	build/heapwatch.o \
+	build/trace.o
 
 USER_BINS =\
 	build/user/helloworld
