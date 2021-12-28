@@ -569,6 +569,8 @@ inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate, uint8_t d
     uint8_t is_valid = node->isvalid;
     uint8_t is_dir = node->type == inode_type_dir ? 1 : 0;
 
+    *result = 0;
+
     if (!is_valid)
     {
         if (create)
@@ -592,7 +594,10 @@ inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate, uint8_t d
             {
                 *result = FS_ERR_DIR_HAS_CHILD;
             }
-            inode_delete(node, parent);
+            else
+            {
+                inode_delete(node, parent);
+            }
         }
         if (truncate)
         {

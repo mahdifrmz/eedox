@@ -51,9 +51,8 @@ loader:                         ; the loader label (defined as entry point in li
     call kmain
     jmp $
 inldr_start:
-    push `rld\0`
-    push `lowo`
-    push `/hel`
+    push `t\0\0\0`
+    push `/ini`
     mov ebx, esp
     mov eax, 0x9
     int 0x80

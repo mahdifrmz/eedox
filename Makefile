@@ -30,8 +30,8 @@ OBJECTS =\
 	build/trace.o
 
 USER_BINS =\
-	build/user/helloworld
-
+	build/user/helloworld \
+	build/user/init
 STDLIB_SRC=\
 	user/stdlib.c \
 	user/stdlib.h \
@@ -46,7 +46,7 @@ build/os.iso: build/kernel build/vdsk.img
 
 build/vdsk.img: ${USER_BINS} fsgen.py
 	qemu-img create -fraw build/vdsk.img 16m
-	python3 fsgen.py build/binaries build/user/helloworld
+	python3 fsgen.py build/binaries ${USER_BINS}
 	dd if=build/binaries of=build/vdsk.img conv=notrunc
 
 build/kernel: ${OBJECTS} link.ld

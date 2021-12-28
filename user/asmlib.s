@@ -1,5 +1,6 @@
     SYSCALL_EXIT equ 1
     SYSCALL_WRITE equ 3
+    SYSCALL_EXEC equ 9
     SYSCALL_FORK equ 10
     SYSCALL_GETCWD equ 11
     SYSCALL_SETCWD equ 12
@@ -13,6 +14,7 @@
     global $wait
     global waitpid
     global fork 
+    global exec 
 section .text
 write:
     push ebp
@@ -66,6 +68,17 @@ $wait:
     mov ebp, esp
 
     mov eax, SYSCALL_WAIT
+    mov ebx, [ebp+8]
+    int 0x80
+
+    mov esp, ebp
+    pop ebp
+    ret
+exec:
+    push ebp
+    mov ebp, esp
+
+    mov eax, SYSCALL_EXEC
     mov ebx, [ebp+8]
     int 0x80
 
