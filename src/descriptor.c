@@ -19,7 +19,7 @@ uint32_t fd_table_add(fd_table *table, fd_t fd)
     {
         if (table->cap == table->size)
         {
-            void *buffer = kmalloc(table->cap *= 2);
+            void *buffer = kmalloc((table->cap *= 2) * sizeof(fd_t));
             memcpy(buffer, table->records, table->size * sizeof(fd_t));
             kfree(table->records);
             table->records = buffer;
