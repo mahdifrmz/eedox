@@ -30,7 +30,7 @@ OBJECTS =\
 	build/trace.o
 
 USER_BINS =\
-	build/user/helloworld \
+	build/user/shell \
 	build/user/init
 STDLIB_SRC=\
 	user/stdlib.c \

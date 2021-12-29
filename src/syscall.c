@@ -7,7 +7,10 @@
 #include <fs.h>
 #include <prog.h>
 
+#define syscall_handlers_cap 64
+
 ksemaphore_t reader_lock;
+syscall_handler_t syscall_handlers[syscall_handlers_cap];
 
 int32_t syscall_translate_fs_err(int32_t err)
 {
@@ -28,49 +31,14 @@ int32_t syscall_translate_fs_err(int32_t err)
 
 void syscalls_handle(registers *regs)
 {
-    if (regs->eax == SYSCALL_EXIT)
+    syscall_handler_t handler = syscall_handlers[regs->eax];
+    if (!handler)
     {
-        regs->eax = syscall_exit(regs);
+        kpanic("KERNEL : unknown syscall %u\n", regs->eax);
     }
-    if (regs->eax == SYSCALL_WRITE)
+    else
     {
-        regs->eax = syscall_write(regs);
-    }
-    if (regs->eax == SYSCALL_READ)
-    {
-        regs->eax = syscall_read(regs);
-    }
-    else if (regs->eax == SYSCALL_FORK)
-    {
-        regs->eax = multsk_fork();
-    }
-    else if (regs->eax == SYSCALL_EXEC)
-    {
-        regs->eax = syscall_exec(regs);
-    }
-    else if (regs->eax == SYSCALL_CLOSE)
-    {
-        regs->eax = syscall_close(regs);
-    }
-    else if (regs->eax == SYSCALL_GETCWD)
-    {
-        regs->eax = syscall_getcwd(regs);
-    }
-    else if (regs->eax == SYSCALL_SETCWD)
-    {
-        regs->eax = syscall_setcwd(regs);
-    }
-    else if (regs->eax == SYSCALL_WAIT)
-    {
-        regs->eax = syscall_wait(regs);
-    }
-    else if (regs->eax == SYSCALL_WAITPID)
-    {
-        regs->eax = syscall_waitpid(regs);
-    }
-    else if (regs->eax == 0xffffffff)
-    {
-        syscall_test();
+        regs->eax = handler(regs);
     }
 }
 
@@ -359,8 +327,25 @@ int32_t syscall_exec(registers *regs)
     return 0;
 }
 
+int32_t syscall_fork(_unused registers *regs)
+{
+    return multsk_fork();
+}
+
 void syscalls_init()
 {
     ksemaphore_init(&reader_lock, 1);
+    memset(syscall_handlers, 0, syscall_handlers_cap * sizeof(syscall_handler_t));
+    syscall_handlers[SYSCALL_CLOSE] = syscall_close;
+    syscall_handlers[SYSCALL_OPEN] = syscall_open;
+    syscall_handlers[SYSCALL_WRITE] = syscall_write;
+    syscall_handlers[SYSCALL_READ] = syscall_read;
+    syscall_handlers[SYSCALL_EXEC] = syscall_exec;
+    syscall_handlers[SYSCALL_FORK] = syscall_fork;
+    syscall_handlers[SYSCALL_GETCWD] = syscall_getcwd;
+    syscall_handlers[SYSCALL_SETCWD] = syscall_setcwd;
+    syscall_handlers[SYSCALL_WAIT] = syscall_wait;
+    syscall_handlers[SYSCALL_WAITPID] = syscall_waitpid;
+    syscall_handlers[SYSCALL_EXIT] = syscall_exit;
     load_int_handler(INTCODE_SYSCALL, syscalls_handle);
 }

@@ -1,4 +1,5 @@
     SYSCALL_EXIT equ 1
+    SYSCALL_READ equ 2
     SYSCALL_WRITE equ 3
     SYSCALL_EXEC equ 9
     SYSCALL_FORK equ 10
@@ -15,12 +16,26 @@
     global waitpid
     global fork 
     global exec 
+    global read 
 section .text
 write:
     push ebp
     mov ebp, esp
 
     mov eax, SYSCALL_WRITE
+    mov ebx, [ebp+8]
+    mov ecx, [ebp+12]
+    mov edx, [ebp+16]
+    int 0x80
+
+    mov esp, ebp
+    pop ebp
+    ret
+read:
+    push ebp
+    mov ebp, esp
+
+    mov eax, SYSCALL_READ
     mov ebx, [ebp+8]
     mov ecx, [ebp+12]
     mov edx, [ebp+16]
