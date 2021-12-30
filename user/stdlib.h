@@ -7,17 +7,17 @@
 #define STDOUT 1
 #define STDIN 0
 
-int32_t write(int32_t fd, const void *buffer, int32_t length);
-int32_t read(int32_t fd, const void *buffer, int32_t length);
-int32_t getcwd(char *buffer);
-int32_t setcwd(const char *buffer);
-int32_t exit(int16_t statuscode);
-int32_t exec(const char *path);
-int32_t wait(int16_t *statuscode);
-int32_t wait_pid(int32_t pid, int16_t *statuscode);
-int32_t fork();
+int write(int fd, const void *buffer, int length);
+int read(int fd, const void *buffer, int length);
+int getcwd(char *buffer);
+int setcwd(const char *buffer);
+int exit(short int statuscode);
+int exec(const char *path);
+int wait(short int *statuscode);
+int wait_pid(int pid, short int *statuscode);
+int fork();
 
-int32_t _printf(const char *message, va_list args);
-int32_t printf(const char *message, ...);
+int _printf(const char *message, va_list args);
+int printf(const char *message, ...);
 
 #endif
