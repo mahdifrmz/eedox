@@ -92,6 +92,11 @@ int32_t syscall_getcwd(registers *regs)
     return 0;
 }
 
+int32_t syscall_getpid(_unused registers *regs)
+{
+    return multk_getpid();
+}
+
 int32_t syscall_setcwd(registers *regs)
 {
     task_t *task = multsk_curtask();
@@ -347,5 +352,6 @@ void syscalls_init()
     syscall_handlers[SYSCALL_WAIT] = syscall_wait;
     syscall_handlers[SYSCALL_WAITPID] = syscall_waitpid;
     syscall_handlers[SYSCALL_EXIT] = syscall_exit;
+    syscall_handlers[SYSCALL_GETPID] = syscall_getpid;
     load_int_handler(INTCODE_SYSCALL, syscalls_handle);
 }

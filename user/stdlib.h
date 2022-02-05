@@ -15,6 +15,7 @@ int exit(short int statuscode);
 int exec(const char *path);
 int wait(short int *statuscode);
 int wait_pid(int pid, short int *statuscode);
+int getpid();
 int fork();
 
 int _printf(const char *message, va_list args);

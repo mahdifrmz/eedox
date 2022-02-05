@@ -18,6 +18,7 @@ extern uint32_t kernel_memory_end;
 #define SYSCALL_SETCWD 12
 #define SYSCALL_WAITPID 13
 #define SYSCALL_WAIT 14
+#define SYSCALL_GETPID 15
 
 #define SYSCALL_ERR_INVALID_FD -1
 #define SYSCALL_ERR_WRITEONLY -2
@@ -50,6 +51,7 @@ int32_t syscall_fork(registers *regs);
 int32_t syscall_exit(registers *regs);
 int32_t syscall_wait(registers *regs);
 int32_t syscall_waitpid(registers *regs);
+int32_t syscall_getpid(registers *regs);
 void syscalls_init();
 
 #endif
