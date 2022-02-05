@@ -49,8 +49,10 @@ build/vdsk.img: ${USER_BINS} fsgen.py
 	python3 fsgen.py build/binaries ${USER_BINS}
 	dd if=build/binaries of=build/vdsk.img conv=notrunc
 
-build/kernel: ${OBJECTS} link.ld
+build/kernel: ${OBJECTS} link.ld trace.py
 	ld -T link.ld -m elf_i386 ${OBJECTS} -o $@
+	echo $(echo salam) # $(expr $(printf "%d\n" $(objdump -D -F build/kernel | grep symtable | grep -o -E '0x[0-9]+')) / 4096)
+	python3 trace.py | dd if=/dev/stdin of=build/kernel bs=4096 count=8 seek=9 conv=notrunc 
 	cp $@ ./iso/boot/kernel
 
 build/user/libstd.a: ${STDLIB_SRC}

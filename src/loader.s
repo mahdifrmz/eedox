@@ -9,7 +9,9 @@
     global user_write
     global inldr_start
     global inldr_end
-    
+    global symtable
+    global symtable_count
+
     MAGIC_NUMBER equ 0x1BADB002     ; define the magic number constant
     FLAGS        equ 0x0            ; multiboot flags
     CHECKSUM     equ -MAGIC_NUMBER  ; calculate the checksum
@@ -74,3 +76,8 @@ user_write:
 
 section .bss
     initial_stack resb INITIAL_STACK_SIZE
+section .data
+symtable_count:
+    dd 0x00000000
+symtable:
+    times 0x8000-4 db '$'

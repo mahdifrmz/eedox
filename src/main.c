@@ -14,6 +14,7 @@
 #include <syscall.h>
 #include <lock.h>
 #include <kb.h>
+#include <trace.h>
 
 terminal_t glb_term;
 gdtrec glb_gdt_records[6];
@@ -167,5 +168,6 @@ void kmain()
     }
 
     fs_init();
+    trace_init();
     asm_usermode(load_indlr());
 }
