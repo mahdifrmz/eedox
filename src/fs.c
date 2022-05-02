@@ -1,13 +1,14 @@
 #include <fs.h>
 #include <kutil.h>
 
-const lba28_t fsstart = 2;
 lba28_t balloc_ptr;
 vec_t inodelist;
 krwlock balloc_lock;
 
 #define MAX_NODE_NAME_LENGTH 256
 #define BALLOC_SECTOR 0
+#define ROOT_INDEX_SECTOR 1
+#define FS_START_SECTOR 2
 
 void binit()
 {
@@ -15,7 +16,7 @@ void binit()
     balloc_fetch();
     if (balloc_ptr == 0)
     {
-        balloc_ptr = fsstart;
+        balloc_ptr = FS_START_SECTOR;
         balloc_update();
     }
 }
@@ -675,13 +676,13 @@ void fs_init()
     binit();
 
     char *root_index_buffer = kmalloc(SECTOR_SIZE);
-    ata_read(1, root_index_buffer);
+    ata_read(ROOT_INDEX_SECTOR, root_index_buffer);
     uint32_t root_index = *(uint32_t *)root_index_buffer;
     if (!root_index)
     {
-        root_index = fsstart;
+        root_index = FS_START_SECTOR;
         *(uint32_t *)root_index_buffer = root_index;
-        ata_write(1, root_index_buffer);
+        ata_write(ROOT_INDEX_SECTOR, root_index_buffer);
     }
     kfree(root_index_buffer);
 
