@@ -5,9 +5,12 @@ int main()
     char buffer[256];
     while (1)
     {
-        printf("sh(%u)->", getpid());
+        printf("sh->", getpid());
         int len = read(STDIN, buffer, 256);
-        write(STDOUT, buffer, len);
+        if (len > 1)
+        {
+            write(STDOUT, buffer, len);
+        }
     }
     exit(0);
     return 0;
