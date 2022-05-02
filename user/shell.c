@@ -5,7 +5,7 @@ int main()
     char buffer[256];
     while (1)
     {
-        printf("sh->", getpid());
+        printf("sh->");
         int len = read(STDIN, buffer, 256);
         if (len > 1)
         {
