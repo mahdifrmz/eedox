@@ -15,6 +15,7 @@ kstring_t kstring_new_sh(uint32_t size, heap_t *heap)
     kstr.cap = size;
     kstr.heap = heap;
     kstr.buffer = kstring_alloc(&kstr, kstr.cap);
+    kstr.buffer[0] = 0;
     return kstr;
 }
 
