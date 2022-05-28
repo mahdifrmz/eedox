@@ -92,6 +92,7 @@ void paging_init()
 page_directory_t *page_directory_clone(page_directory_t *dir)
 {
     page_directory_t *newdir = kmalloc_a(sizeof(page_directory_t));
+    memset(newdir, 0, sizeof(page_directory_t));
     newdir->physical = (uint32_t)get_physical_address((uint32_t)newdir) + ((uint32_t)newdir->tables_physical - (uint32_t)newdir);
     for (uint32_t i = 0; i < 1024; i++)
     {
@@ -115,7 +116,7 @@ page_directory_t *page_directory_clone(page_directory_t *dir)
 page_table_t *page_table_clone(page_table_t *table)
 {
     page_table_t *new_table = kmalloc_a(sizeof(page_table_t));
-
+    memset(new_table,0,sizeof(page_table_t));
     for (uint32_t i = 0; i < 1024; i++)
     {
         if (table->pages[i].frame)
