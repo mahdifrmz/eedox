@@ -42,6 +42,21 @@ void syscalls_handle(registers *regs)
     }
 }
 
+pathbuf_t resolve_path(pathbuf_t path)
+{
+    if(path.is_absolute)
+    {
+        return path;
+    }
+    else
+    {
+        task_t* curtask = multsk_curtask();
+        pathbuf_t full = pathbuf_join(&curtask->cwd,&path);
+        pathbuf_free(&path);
+        return full;
+    }
+}
+
 int32_t syscall_wait(registers *regs)
 {
     int16_t *stref = (int16_t *)regs->ebx;
@@ -102,10 +117,7 @@ int32_t syscall_setcwd(registers *regs)
 {
     task_t *task = multsk_curtask();
     pathbuf_t cwd = pathbuf_parse((const char *)regs->ebx);
-    if (!cwd.is_absolute)
-    {
-        cwd = pathbuf_join(&task->cwd, &cwd);
-    }
+    cwd = resolve_path(cwd);
     int8_t res;
     inode_t *dir = fs_open(&cwd, 0, 0, 1, 0, &res);
     fs_close(dir);
@@ -138,6 +150,7 @@ int32_t syscall_open(registers *regs)
     task_t *task = multsk_curtask();
     const char *path = (const char *)regs->ebx;
     pathbuf_t pathbuf = pathbuf_parse(path);
+    pathbuf = resolve_path(pathbuf);
     uint32_t flags = regs->ecx;
     uint8_t flag_create = flags & 0x00000001;
     uint8_t flag_truncate = flags & 0x00000010;
@@ -337,6 +350,7 @@ void place_args_vector(const char** argv,uint32_t* stack)
 int32_t syscall_exec(registers *regs)
 {
     pathbuf_t path = pathbuf_parse((char *)regs->ebx);
+    path = resolve_path(path);
     int8_t rres;
     uint32_t stack_ptr = regs->esp + USER_STACK_SIZE - 0x40;
     place_args_vector((const char**)regs->ecx,&stack_ptr);
