@@ -50,11 +50,11 @@ int32_t syscall_wait(registers *regs)
     task_t *child = multsk_find_zombie(task);
     if (!child)
     {
-        task->status = -3;
+        task->wait = TASK_WAIT_ALL;
         multsk_sleep();
-        child = task->chwait;
     }
-    *stref = child->status;
+    child = task->chwait;
+    *stref = child->exit_status;
     uint32_t child_pid = child->pid;
     multsk_killtask(child);
     return child_pid;
@@ -71,12 +71,13 @@ int32_t syscall_waitpid(registers *regs)
     {
         return SYSCALL_ERR_INVAL_CHILDPID;
     }
-    if (child->status == -1)
+    if (child->exit_status == -1)
     {
-        child->status = -2;
+        task->wait = TASK_WAIT_PID;
+        task->chwait = child;
         multsk_sleep();
     }
-    *stref = child->status;
+    *stref = child->exit_status;
     multsk_killtask(child);
     return child_pid;
 }
@@ -118,18 +119,16 @@ int32_t syscall_setcwd(registers *regs)
 
 int32_t syscall_exit(registers *regs)
 {
-
     int16_t statuscode = regs->ebx;
     task_t *task = multsk_curtask();
     task_t *parent = task->parent;
-    if ((task->status == -1 && parent->status == -3) || task->status == -2)
+    task->exit_status = statuscode;
+    if ((parent->wait == TASK_WAIT_PID && parent->chwait == task) || parent->wait == TASK_WAIT_ALL)
     {
-
         parent->chwait = task;
-        parent->status = -1;
+        parent->wait = TASK_WAIT_NONE;
         multsk_awake(parent);
     }
-    task->status = statuscode;
     multsk_sleep();
     return 0;
 }

@@ -9,6 +9,10 @@
 #define KERNEL_STACK_SIZE 0x2000
 #define USER_STACK_SIZE 0x2000
 
+#define TASK_WAIT_NONE 1
+#define TASK_WAIT_PID 2
+#define TASK_WAIT_ALL 3
+
 extern uint32_t kernel_stack_ptr;
 extern uint32_t user_stack_ptr;
 
@@ -24,12 +28,9 @@ struct task_t
     fd_table table;
     pathbuf_t cwd;
     task_t *parent;
+    int16_t exit_status;
     task_t *chwait;
-    // 0->255 : zombie with status code
-    // -1 : running
-    // -2 : running & lone-waited
-    // -3 : waiting all
-    int16_t status;
+    uint8_t wait;
 };
 
 extern uint8_t multsk_flag;

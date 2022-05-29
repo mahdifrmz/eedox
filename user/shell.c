@@ -9,7 +9,12 @@ int main()
     {
         printf("sh->");
         int len = read(STDIN, buffer, BUFFER_SIZE);
-        if (len > 1)
+        buffer[len] = 0;
+        if(strcmp(buffer,"exit\n") == 0)
+        {
+            exit(0);
+        }
+        else if (len > 1)
         {
             write(STDOUT, buffer, len);
         }

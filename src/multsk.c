@@ -28,7 +28,6 @@ void multsk_switch(uint32_t sleep)
     {
         return;
     }
-
     task_t *curtask = (task_t *)kqueue_pop(&rr_queue);
     if (sleep == 2) // termination
     {
@@ -73,14 +72,14 @@ uint32_t multsk_fork()
     newtask->eip = asm_get_eip();
     if (newtask->eip != 0xffffffff)
     {
-        newtask->status = 0;
+        newtask->exit_status = -1;
+        newtask->wait = TASK_WAIT_NONE;
         newtask->page_dir = page_directory_clone(curtask->page_dir);
         newtask->table = fd_table_clone(&curtask->table);
         kqueue_push(&rr_queue, (uint32_t)newtask);
         newtask->cwd = pathbuf_copy(&curtask->cwd);
         newtask->parent = curtask;
         newtask->chwait = NULL;
-        newtask->status = -1;
         vec_push(&tasklist, (uint32_t)newtask);
         return newtask->pid;
     }
@@ -147,7 +146,7 @@ task_t *multsk_find_zombie(task_t *task)
     for (uint32_t i = 0; i < tasklist.size; i++)
     {
         task_t *child = (task_t *)tasklist.buffer[i];
-        if (child->parent == task && child->status > 0)
+        if (child->parent == task && child->exit_status != -1)
         {
             return child;
         }
@@ -180,7 +179,8 @@ void multsk_init()
     multsk_flag = 1;
     first->table = init_fdt();
     first->cwd = pathbuf_root();
-    first->status = -1;
+    first->wait = TASK_WAIT_NONE;
+    first->exit_status = -1;
     first->chwait = NULL;
     first->parent = NULL;
     vec_push(&tasklist, (uint32_t)first);
