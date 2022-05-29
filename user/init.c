@@ -22,7 +22,7 @@ int fmain()
             }
         }
     }
-    const char* args [2] = {"/shell",NULL};
+    char* args [2] = {"/shell",NULL};
     exec("/shell",args);
     exit(0);
     return 0;

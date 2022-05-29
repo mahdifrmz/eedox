@@ -343,7 +343,6 @@ int32_t syscall_exec(registers *regs)
     inode_t *binary = fs_open(&path, 0, 0, 0, 0, &rres);
     if (rres != 0)
     {
-        kprintf("err=%u\n", -rres);
         return syscall_translate_fs_err(rres);
     }
     uint32_t entry;

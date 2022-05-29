@@ -31,7 +31,8 @@ OBJECTS =\
 
 USER_BINS =\
 	build/user/shell \
-	build/user/init
+	build/user/init \
+	build/user/echo
 STDLIB_SRC=\
 	user/stdlib.c \
 	user/stdlib.h \
