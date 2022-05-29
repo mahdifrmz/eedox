@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-int main()
+int fmain()
 {
     int32_t shell_pid = fork();
     if (shell_pid != 0)
@@ -22,7 +22,8 @@ int main()
             }
         }
     }
-    exec("/shell");
+    const char* args [2] = {"/shell",NULL};
+    exec("/shell",args);
     exit(0);
     return 0;
 }

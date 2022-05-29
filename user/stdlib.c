@@ -27,3 +27,11 @@ int printf(const char *message, ...)
     va_end(args);
     return count;
 }
+
+int fmain(int argc, const char** argv);
+
+void startup(int argc,const char** argv)
+{
+    int status_code = fmain(argc,argv);
+    exit((short)status_code);
+}

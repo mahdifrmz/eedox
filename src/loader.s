@@ -56,6 +56,8 @@ inldr_start:
     push `t\0\0\0`
     push `/ini`
     mov ebx, esp
+    push 0x0
+    mov ecx, esp
     mov eax, 0x9
     int 0x80
     jmp $

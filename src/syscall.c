@@ -303,10 +303,43 @@ int32_t syscall_write(registers *regs)
     }
 }
 
+void place_args_vector(const char** argv,uint32_t* stack)
+{
+    uint32_t esp = *stack;
+    vec_t arg_list = vec_new();
+    uint32_t args_size = 0;
+    while(*argv)
+    {
+        args_size += (1 + strlen(*argv));
+        vec_push(&arg_list,(uint32_t)*(argv++));
+    }
+    const char** ptrs = (const char**)(esp - args_size); 
+    char* args = (char*) esp;
+    uint32_t new_esp = esp - 8 - 4 * (vec_size(&arg_list) + 1) - args_size;
+    uint32_t argc = vec_size(&arg_list);
+    while(vec_size(&arg_list))
+    {
+        const char* arg = (const char*)vec_pop(&arg_list);
+        uint32_t arglen = strlen(arg);
+        args -= arglen + 1;
+        strcpy(args,arg);
+        args[arglen] = 0;
+        *(--ptrs) = args;
+    }
+
+    new_esp -= new_esp % 64;
+    *(uint32_t*)(new_esp + 4) = argc;
+    *(const char***) (new_esp + 8) = ptrs;
+    *stack = new_esp;
+    vec_free(&arg_list);
+}
+
 int32_t syscall_exec(registers *regs)
 {
     pathbuf_t path = pathbuf_parse((char *)regs->ebx);
     int8_t rres;
+    uint32_t stack_ptr = regs->esp + USER_STACK_SIZE - 0x40;
+    place_args_vector((const char**)regs->ecx,&stack_ptr);
     inode_t *binary = fs_open(&path, 0, 0, 0, 0, &rres);
     if (rres != 0)
     {
@@ -327,7 +360,7 @@ int32_t syscall_exec(registers *regs)
         return SYSCALL_ERR_INVALID_LOAD_ADDRESS;
     }
     regs->eip = entry;
-    regs->useresp = regs->esp + USER_STACK_SIZE - 0x40;
+    regs->useresp = stack_ptr;
     pathbuf_free(&path);
     return 0;
 }

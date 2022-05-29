@@ -65,7 +65,7 @@ section .text
     SYSCALL_2R exit, 1
     SYSCALL_4R read, 2
     SYSCALL_4R write, 3
-    SYSCALL_2R exec, 9
+    SYSCALL_3R exec, 9
     SYSCALL_1R fork, 10
     SYSCALL_2R getcwd, 11
     SYSCALL_2R setcwd, 12

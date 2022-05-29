@@ -12,7 +12,7 @@ int read(int fd, const void *buffer, int length);
 int getcwd(char *buffer);
 int setcwd(const char *buffer);
 int exit(short int statuscode);
-int exec(const char *path);
+int exec(const char *path,const char* argv []);
 int wait(short int *statuscode);
 int wait_pid(int pid, short int *statuscode);
 int getpid();

@@ -62,7 +62,7 @@ build/user/libstd.a: ${STDLIB_SRC}
 
 build/user/%: user/%.c build/user/libstd.a
 	i686-elf-gcc ${CUSERFLAGS} -c $< -o $@.o
-	ld --section-start=.text=0x01400000 -m elf_i386 --entry=main -o $@ $@.o -Lbuild/user -lstd
+	ld --section-start=.text=0x01400000 -m elf_i386 --entry=startup -o $@ $@.o -Lbuild/user -lstd
 
 build/%.o: src/%.s
 	nasm -g -f elf32 -o $@ $<

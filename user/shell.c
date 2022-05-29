@@ -2,7 +2,7 @@
 
 #define BUFFER_SIZE 256
 
-int main()
+int fmain()
 {
     char buffer[BUFFER_SIZE];
     while (1)
@@ -12,13 +12,12 @@ int main()
         buffer[len] = 0;
         if(strcmp(buffer,"exit\n") == 0)
         {
-            exit(0);
+            return 0;
         }
         else if (len > 1)
         {
             write(STDOUT, buffer, len);
         }
     }
-    exit(0);
     return 0;
 }
