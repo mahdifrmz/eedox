@@ -329,6 +329,7 @@ int32_t syscall_exec(registers *regs)
     }
     regs->eip = entry;
     regs->useresp = regs->esp + USER_STACK_SIZE - 0x40;
+    pathbuf_free(&path);
     return 0;
 }
 
