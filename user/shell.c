@@ -36,15 +36,20 @@ void parse_input(int* arg_idx,char* buffer,char** arglist)
 {
     *arg_idx = 0;    
     char* arg_ptr = NULL;
-    for(int i=0;buffer[i] != 0;i++)
+    for(int i=0;;i++)
     {
-        if(buffer[i] == ' ' || buffer[i] == '\n')
+        if(buffer[i] == ' ' || buffer[i] == '\n' || buffer[i] == 0)
         {
+            int flag = buffer[i] == 0 ? 1 : 0;
             if(arg_ptr)
             {
                 buffer[i] = 0;
                 arglist[(*arg_idx)++] = arg_ptr;
                 arg_ptr = NULL;
+            }
+            if(flag)
+            {
+                break;
             }
         }
         else if (!arg_ptr)
@@ -67,6 +72,10 @@ int fmain()
         }
         printf("sh->");
         int len = read(STDIN, buffer, BUFFER_SIZE);
+        if(!len)
+        {
+            break;
+        }
         buffer[len] = 0;
         parse_input(&arg_idx,buffer,arglist);
         execute_command(arg_idx,arglist);    

@@ -8,6 +8,10 @@
 #include <asm.h>
 #include <kutil.h> // FIXME
 
+#define KEY_SHIFT 42
+#define KEY_ALT 56
+#define KEY_CTRL 29
+
 unsigned char kbchars[128] = {
     0, 27, '1', '2', '3', '4', '5', '6', '7', '8',    /* 9 */
     '9', '0', '-', '=', '\b',                         /* Backspace */
@@ -53,15 +57,65 @@ task_t *reader_task = NULL;
 
 uint32_t keyboard_input_size = 0;
 
+uint8_t key_shift = 0;
+uint8_t key_ctrl = 0;
+uint8_t key_alt = 0;
+
+void setkey(uint8_t keycode)
+{
+    if(keycode == KEY_SHIFT)
+    {
+        key_shift = 1;
+    }
+    if(keycode == KEY_SHIFT + 128)
+    {
+        key_shift = 0;
+    }
+    if(keycode == KEY_CTRL)
+    {
+        key_ctrl = 1;
+    }
+    if(keycode == KEY_CTRL + 128)
+    {
+        key_ctrl = 0;
+    }
+    if(keycode == KEY_ALT)
+    {
+        key_alt = 1;
+    }
+    if(keycode == KEY_ALT + 128)
+    {
+        key_alt = 0;
+    }
+}
+
+void keyboard_eof()
+{
+    keyboard_input_size = 0;
+    kqueue_push(&input_list, (uint32_t)kstring_str(&terminal_buffer));
+    terminal_buffer = kstring_new();
+    if (reader_task && multsk_flag)
+    {
+        multsk_awake(reader_task);
+        reader_task = NULL;
+    }
+}
+
 void keyboard_handler(__attribute__((unused)) registers *regs)
 {
     uint8_t scancode = asm_inb(0x60);
+    setkey(scancode);
+    // kprintf("SCANCODE = %u\n",scancode);
     if (scancode < 128)
     {
         char ch = kbchars[scancode];
         if (ch != 0)
         {
-            if (ch == '\b')
+            if(ch == 'd' && key_ctrl)
+            {
+                keyboard_eof();
+            }
+            else if (ch == '\b')
             {
                 if (keyboard_input_size)
                 {
@@ -70,21 +124,18 @@ void keyboard_handler(__attribute__((unused)) registers *regs)
                     term_backspace(&glb_term);
                 }
             }
-            else
+            else if(!key_ctrl)
             {
+                if(key_shift)
+                {
+                    ch -= 32;
+                }
                 keyboard_input_size++;
                 term_write_char(&glb_term, ch);
                 kstring_push(&terminal_buffer, ch);
                 if (ch == '\n')
                 {
-                    keyboard_input_size = 0;
-                    kqueue_push(&input_list, (uint32_t)kstring_str(&terminal_buffer));
-                    terminal_buffer = kstring_new();
-                    if (reader_task && multsk_flag)
-                    {
-                        multsk_awake(reader_task);
-                        reader_task = NULL;
-                    }
+                    keyboard_eof();
                 }
             }
         }
