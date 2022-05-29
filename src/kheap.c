@@ -113,7 +113,14 @@ void heap_high_split(heap_t *heap, hheader_t *hole, uint32_t size)
 
 uint32_t heap_hole_index(heap_t *heap, hheader_t *head)
 {
-    return bin_search((uint32_t *)heap->index.array, heap->index.size, (uint32_t)head, compare_headers);
+    for(uint32_t i=0;i<heap->index.size;i++)
+    {
+        if(heap->index.array[i] == head)
+        {
+            return i;
+        }
+    }
+    return -1;
 }
 
 void heap_merge(heap_t *heap, hheader_t *hole)
@@ -133,7 +140,7 @@ void heap_merge(heap_t *heap, hheader_t *hole)
 
 void *heap_alloc(heap_t *heap, uint32_t size, uint8_t align)
 {
-    heap_check(heap);
+    heap_check(heap,"before alloc");
     if (size == 0)
     {
         return NULL;
@@ -200,13 +207,13 @@ void *heap_alloc(heap_t *heap, uint32_t size, uint8_t align)
     void *ptr = (void *)((uint32_t)best_hole + sizeof(hheader_t));
 
     heapwatch_alloc(&watcher, (uint32_t)best_hole + sizeof(hheader_t), size);
-    heap_check(heap);
+    heap_check(heap,"after alloc");
     return ptr;
 }
 
 void heap_free(heap_t *heap, void *ptr)
 {
-    heap_check(heap);
+    heap_check(heap,"before free");
     heapwatch_free(&watcher, (uint32_t)ptr);
     if (!ptr)
     {
@@ -231,5 +238,5 @@ void heap_free(heap_t *heap, void *ptr)
             heap_merge(heap, block);
         }
     }
-    heap_check(heap);
+    heap_check(heap,"after free");
 }

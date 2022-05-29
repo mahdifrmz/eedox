@@ -63,7 +63,7 @@ void heapwatch_free(heapwatch_t *watch, uint32_t ptr)
     kpanic("DOUBLE FREE");
 }
 
-void heap_check(heap_t *heap)
+void heap_check(heap_t *heap, const char* label)
 {
     hheader_t *start = heap->start;
     hheader_t *end = heap->start + heap->size;
@@ -75,18 +75,18 @@ void heap_check(heap_t *heap)
     {
         if (cur->is_hole > 1 || cur->prev > cur)
         {
-            kpanic("corrupted heap (1)");
+            kpanic("corrupted heap (1) [%s]",label);
         }
         prev = cur->prev;
         if (prev >= start)
         {
             if ((uint32_t)prev + sizeof(hheader_t) + prev->size != (uint32_t)cur)
             {
-                kpanic("corrupted heap (2)");
+                kpanic("corrupted heap (2) [%s]",label);
             }
             if (prev->is_hole && cur->is_hole)
             {
-                kpanic("corrupted heap (3)");
+                kpanic("corrupted heap (3) [%s]",label);
             }
         }
         next = (hheader_t *)((uint32_t)cur + sizeof(hheader_t) + cur->size);
@@ -98,12 +98,12 @@ void heap_check(heap_t *heap)
         {
             if (next->prev != cur)
             {
-                kpanic("corrupted heap (4)");
+                kpanic("corrupted heap (4) [%s]",label);
             }
 
             if (cur->is_hole && next->is_hole)
             {
-                kpanic("corrupted heap (5)");
+                kpanic("corrupted heap (5) [%s]",label);
             }
         }
         cur = next;
