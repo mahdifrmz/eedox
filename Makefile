@@ -36,7 +36,8 @@ USER_BINS =\
 	build/user/cat \
 	build/user/ls \
 	build/user/tee \
-	build/user/mkdir
+	build/user/mkdir \
+	build/user/cp
 STDLIB_SRC=\
 	user/stdlib.c \
 	user/stdlib.h \
