@@ -408,25 +408,58 @@ void place_args_vector(const char** argv,uint32_t* stack)
     vec_free(&arg_list);
 }
 
+inode_t* exec_open(pathbuf_t* path,int8_t* rres)
+{
+    task_t* task = multsk_curtask();
+    pathbuf_t respath;
+    pathbuf_t bindir = pathbuf_parse("/bin/");
+    inode_t *binary;
+    if(!path->is_absolute)
+    {
+        respath = pathbuf_join(&task->cwd,path);
+        binary = fs_open(&respath, 0, 0, 0, 0, rres);
+        if (*rres != 0)
+        {
+            pathbuf_free(&respath);
+            respath = pathbuf_join(&bindir,path);
+            binary = fs_open(&respath, 0, 0, 0, 0, rres);
+            if(*rres != 0)
+            {
+                binary = NULL;
+            }
+        }
+        pathbuf_free(&respath);
+    }
+    else{
+        binary = fs_open(path, 0, 0, 0, 0, rres);
+        if (*rres != 0)
+        {
+            binary = NULL;   
+        }
+    }
+    pathbuf_free(&bindir);
+    return binary;
+}
+
 int32_t syscall_exec(registers *regs)
 {
     pathbuf_t path = pathbuf_parse((char *)regs->ebx);
-    path = resolve_path(path);
     int8_t rres;
-    uint32_t stack_ptr = regs->esp + USER_STACK_SIZE - 0x40;
-    place_args_vector((const char**)regs->ecx,&stack_ptr);
-    inode_t *binary = fs_open(&path, 0, 0, 0, 0, &rres);
-    if (rres != 0)
+    inode_t* binary = exec_open(&path,&rres);
+    if(rres != 0)
     {
         return syscall_translate_fs_err(rres);
     }
-    uint32_t entry;
     char *program = kmalloc(binary->size);
     int32_t rsl = fs_read(binary, program, 0, binary->size);
     if (rsl < 0)
     {
-        return syscall_translate_fs_err(rres);
+        return syscall_translate_fs_err(rsl);
     }
+
+    uint32_t stack_ptr = regs->esp + USER_STACK_SIZE - 0x40;
+    place_args_vector((const char**)regs->ecx,&stack_ptr);
+    uint32_t entry;
     rsl = prog_load(program, kernel_memory_end, &entry);
     kfree(program);
     if (rsl != 0)
