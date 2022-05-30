@@ -151,9 +151,9 @@ int32_t syscall_open(registers *regs)
     const char *path = (const char *)regs->ebx;
     pathbuf_t pathbuf = pathbuf_parse(path);
     pathbuf = resolve_path(pathbuf);
-    uint32_t flags = regs->ecx;
-    uint8_t flag_create = flags & 0x00000001;
-    uint8_t flag_truncate = flags & 0x00000010;
+    uint8_t flags = regs->ecx;
+    uint8_t flag_create = flags & 0x01;
+    uint8_t flag_truncate = (flags & 0x02) >> 1;
     int8_t res;
     inode_t *node = fs_open(&pathbuf, flag_create, flag_truncate, 0, 0, &res);
     if (res != 0)
@@ -166,8 +166,8 @@ int32_t syscall_open(registers *regs)
     fd.ptr = node;
     fd.kind = FD_KIND_DISK;
     fd.isopen = 1;
-    fd_table_add(&task->table, fd);
-    return 0;
+    int32_t fd_index = (int32_t)fd_table_add(&task->table, fd);
+    return fd_index;
 }
 
 int32_t syscall_close(registers *regs)
@@ -298,7 +298,7 @@ int32_t syscall_write(registers *regs)
     {
         return SYSCALL_ERR_INVALID_FD;
     }
-    if (!(fd->access | FD_ACCESS_WRITE))
+    if (!(fd->access & FD_ACCESS_WRITE))
     {
         return SYSCALL_ERR_READONLY;
     }

@@ -9,6 +9,7 @@
 
 int write(int fd, const void *buffer, int length);
 int read(int fd, const void *buffer, int length);
+int open(const char *path, int flags);
 int getcwd(char *buffer);
 int setcwd(const char *buffer);
 int exit(short int statuscode);
