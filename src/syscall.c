@@ -170,6 +170,55 @@ int32_t syscall_open(registers *regs)
     return fd_index;
 }
 
+int32_t syscall_opendir(registers *regs)
+{
+    task_t *task = multsk_curtask();
+    const char *path = (const char *)regs->ebx;
+    pathbuf_t pathbuf = pathbuf_parse(path);
+    pathbuf = resolve_path(pathbuf);
+    int8_t res;
+    inode_t *node = fs_open(&pathbuf, 0, 0, 1, 0, &res);
+    if (res != 0)
+    {
+        return syscall_translate_fs_err(res);
+    }
+    fd_t fd;
+    fd.access = FD_ACCESS_READ;
+    fd.pos = 0;
+    fd.ptr = node;
+    fd.kind = FD_KIND_DIR;
+    fd.isopen = 1;
+    int32_t fd_index = (int32_t)fd_table_add(&task->table, fd);
+    return fd_index;
+}
+
+int32_t syscall_readdir(registers *regs)
+{
+    task_t *task = multsk_curtask();
+    uint32_t fd_id = regs->ebx;
+    if (fd_id >= task->table.size)
+    {
+        return SYSCALL_ERR_INVALID_FD;
+    }
+    fd_t *fd = &task->table.records[fd_id];
+    if (!fd->isopen)
+    {
+        return SYSCALL_ERR_INVALID_FD;
+    }
+    if (fd->kind != FD_KIND_DIR)
+    {
+        return SYSCALL_ERR_INVALID_FD;
+    }
+    inode_t *node = fd->ptr;
+    int32_t ret = fs_readdir(node, (char*)regs->ecx, fd->pos);
+    if (ret == FS_ERR_DELETED)
+    {
+        return SYSCALL_ERR_UNLINKED_FILE;
+    }
+    fd->pos += ret;
+    return ret;
+}
+
 int32_t syscall_close(registers *regs)
 {
     task_t *task = multsk_curtask();
@@ -391,6 +440,8 @@ void syscalls_init()
     syscall_handlers[SYSCALL_OPEN] = syscall_open;
     syscall_handlers[SYSCALL_WRITE] = syscall_write;
     syscall_handlers[SYSCALL_READ] = syscall_read;
+    syscall_handlers[SYSCALL_READDIR] = syscall_readdir;
+    syscall_handlers[SYSCALL_OPENDIR] = syscall_opendir;
     syscall_handlers[SYSCALL_EXEC] = syscall_exec;
     syscall_handlers[SYSCALL_FORK] = syscall_fork;
     syscall_handlers[SYSCALL_GETCWD] = syscall_getcwd;

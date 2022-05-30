@@ -9,6 +9,7 @@
 #define FD_KIND_STDIN 1
 #define FD_KIND_STDOUT 2
 #define FD_KIND_DISK 4
+#define FD_KIND_DIR 5
 
 typedef struct
 {

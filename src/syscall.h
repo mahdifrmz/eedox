@@ -12,6 +12,8 @@ extern uint32_t kernel_memory_end;
 #define SYSCALL_WRITE 3
 #define SYSCALL_OPEN 4
 #define SYSCALL_CLOSE 5
+#define SYSCALL_OPENDIR 6
+#define SYSCALL_READDIR 7
 #define SYSCALL_EXEC 9
 #define SYSCALL_FORK 10
 #define SYSCALL_GETCWD 11

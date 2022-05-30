@@ -161,8 +161,10 @@ uint32_t inode_readdir(inode_t *node, uint32_t from, char *buffer)
     }
     char *dir = kmalloc(node->size - from);
     inode_read(node, from, dir, node->size - from);
+    uint32_t dirlen = strlen(dir);
     strcpy(buffer, dir);
-    uint32_t len = strlen(dir) + 5;
+    uint32_t len = dirlen + 5;
+    buffer[dirlen] = 0;
     kfree(dir);
     return len;
 }

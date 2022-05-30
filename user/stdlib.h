@@ -10,6 +10,8 @@
 int write(int fd, const void *buffer, int length);
 int read(int fd, const void *buffer, int length);
 int open(const char *path, int flags);
+int opendir(const char *path);
+int readdir(int fd, char* buffer);
 int getcwd(char *buffer);
 int setcwd(const char *buffer);
 int exit(short int statuscode);
