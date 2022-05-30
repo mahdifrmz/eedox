@@ -51,5 +51,7 @@ void multsk_wait_all(task_t *task);
 task_t *multsk_gettask(uint32_t pid);
 void multsk_killtask(task_t *task);
 void multsk_orphan_all(task_t *task);
+void multsk_close_fd(uint32_t fd_id);
+void multsk_close_all_fds();
 
 #endif

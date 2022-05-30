@@ -66,6 +66,7 @@ section .text
     SYSCALL_4R read, 2
     SYSCALL_4R write, 3
     SYSCALL_3R open, 4
+    SYSCALL_2R close, 5
     SYSCALL_2R opendir, 6
     SYSCALL_3R readdir, 7
     SYSCALL_3R exec, 9

@@ -135,6 +135,7 @@ int32_t syscall_exit(registers *regs)
     task_t *task = multsk_curtask();
     task_t *parent = task->parent;
     task->exit_status = statuscode;
+    multsk_close_all_fds();
     if ((parent->wait == TASK_WAIT_PID && parent->chwait == task) || parent->wait == TASK_WAIT_ALL)
     {
         parent->chwait = task;
@@ -232,11 +233,7 @@ int32_t syscall_close(registers *regs)
     {
         return SYSCALL_ERR_INVALID_FD;
     }
-    fd_table_rem(&task->table, fd_id);
-    if (fd->kind == FD_KIND_DISK)
-    {
-        fs_close(fd->ptr);
-    }
+    multsk_close_fd(fd_id);
     return 0;
 }
 

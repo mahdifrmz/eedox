@@ -31,6 +31,7 @@ int fmain(int argc, const char** argv)
             }
             else{
                 cat(fd);
+                close(fd);
             }
         }
     }

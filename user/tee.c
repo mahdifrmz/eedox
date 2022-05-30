@@ -20,5 +20,6 @@ int fmain(int argc, const char** argv)
         }
         write(fd,buffer,rsl);
     }
+    close(fd);
     return 0;
 }

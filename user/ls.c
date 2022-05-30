@@ -15,6 +15,7 @@ void ls(const char* address)
         }
         printf("%s\n",name);
     }
+    close(fd);
 }
 
 int fmain(int argc,const char** argv)

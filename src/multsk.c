@@ -2,6 +2,7 @@
 #include <kqueue.h>
 #include <kutil.h>
 #include <asm.h>
+#include <fs.h>
 
 #define KERNEL_STACK_SIZE 0x2000
 #define INIT_PID 1
@@ -185,6 +186,34 @@ void multsk_init()
     first->parent = NULL;
     vec_push(&tasklist, (uint32_t)first);
     load_int_handler(INTCODE_PIC, multsk_timer);
+}
+
+void multsk_close_fd(uint32_t fd_id)
+{
+    task_t *task = multsk_curtask();
+    if (fd_id >= task->table.size)
+    {
+        return;
+    }
+    fd_t *fd = &task->table.records[fd_id];
+    if (!fd->isopen)
+    {
+        return;
+    }
+    fd_table_rem(&task->table, fd_id);
+    if (fd->kind == FD_KIND_DISK || fd->kind == FD_KIND_DIR)
+    {
+        fs_close(fd->ptr);
+    }
+}
+
+void multsk_close_all_fds()
+{
+    task_t* task = multsk_curtask();
+    for(uint32_t i=0;i<task->table.size;i++)
+    {
+        multsk_close_fd(i);
+    }
 }
 
 void multsk_timer(__attribute__((unused)) registers *regs)
