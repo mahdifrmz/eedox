@@ -50,9 +50,9 @@ QEMU_FLAGS = -drive file=build/vdsk.img,format=raw,index=0,media=disk
 build/os.iso: build/kernel build/vdsk.img
 	grub-mkrescue -o $@ iso
 
-build/vdsk.img: ${USER_BINS} fsgen.py
+build/vdsk.img: ${USER_BINS} fsgen.js
 	qemu-img create -fraw build/vdsk.img 16m
-	python3 fsgen.py build/binaries ${USER_BINS}
+	node fsgen.js build/binaries ${USER_BINS}
 	dd if=build/binaries of=build/vdsk.img conv=notrunc
 
 build/kernel: ${OBJECTS} link.ld trace.py

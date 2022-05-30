@@ -22,8 +22,8 @@ int fmain()
             }
         }
     }
-    char* args [2] = {"/sh",NULL};
-    exec("/sh",args);
+    char* args [2] = {"/bin/sh",NULL};
+    exec("/bin/sh",args);
     exit(0);
     return 0;
 }
