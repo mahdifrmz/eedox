@@ -19,14 +19,15 @@ void execute_command(int arg_idx,char** arglist)
             wait(&status);
             if(status != 0)
             {
-                printf("failed to execute command!\n");
+                printf("sh: command ended with error!\n");
             }
         }
         else{
             int rsl = exec(command,arglist);
             if(rsl)
             {
-                exit(1);
+                printf("sh: failed to execute command!\n");
+                exit(0);
             }
         }
     }

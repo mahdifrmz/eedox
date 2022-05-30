@@ -30,7 +30,7 @@ OBJECTS =\
 	build/trace.o
 
 USER_BINS =\
-	build/user/shell \
+	build/user/sh \
 	build/user/init \
 	build/user/echo \
 	build/user/cat \
