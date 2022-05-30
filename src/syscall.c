@@ -171,6 +171,21 @@ int32_t syscall_open(registers *regs)
     return fd_index;
 }
 
+int32_t syscall_mkdir(registers *regs)
+{
+    const char *path = (const char *)regs->ebx;
+    pathbuf_t pathbuf = pathbuf_parse(path);
+    pathbuf = resolve_path(pathbuf);
+    int8_t res;
+    inode_t *node = fs_open(&pathbuf, 1, 0, 1, 0, &res);
+    fs_close(node);
+    if (res != 0)
+    {
+        return syscall_translate_fs_err(res);
+    }
+    return 0;
+}
+
 int32_t syscall_opendir(registers *regs)
 {
     task_t *task = multsk_curtask();
@@ -447,5 +462,6 @@ void syscalls_init()
     syscall_handlers[SYSCALL_WAITPID] = syscall_waitpid;
     syscall_handlers[SYSCALL_EXIT] = syscall_exit;
     syscall_handlers[SYSCALL_GETPID] = syscall_getpid;
+    syscall_handlers[SYSCALL_MKDIR] = syscall_mkdir;
     load_int_handler(INTCODE_SYSCALL, syscalls_handle);
 }

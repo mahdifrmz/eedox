@@ -12,6 +12,14 @@ void execute_command(int arg_idx,char** arglist)
         {
             exit(0);
         }
+        if(strcmp(command,"cd") == 0)
+        {
+            if(arg_idx >= 2)
+            {
+                setcwd(arglist[1]);
+            }
+            return;
+        }
         int pid = fork();
         if(pid)
         {
@@ -64,6 +72,7 @@ int fmain()
 {
     char buffer[BUFFER_SIZE];
     char* arglist [ARG_MAX_COUNT];
+    char cwd[BUFFER_SIZE];
     int arg_idx = 0;
     while (1)
     {
@@ -71,7 +80,8 @@ int fmain()
         {
             arglist[i] = NULL;
         }
-        printf("sh->");
+        getcwd(cwd);
+        printf("%s$ ",cwd);
         int len = read(STDIN, buffer, BUFFER_SIZE);
         if(!len)
         {

@@ -76,3 +76,4 @@ section .text
     SYSCALL_3R waitpid, 13
     SYSCALL_2R $wait, 14
     SYSCALL_1R getpid, 15
+    SYSCALL_2R mkdir, 16

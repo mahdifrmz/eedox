@@ -18,6 +18,7 @@ int setcwd(const char *buffer);
 int exit(short int statuscode);
 int exec(const char *path,char* argv []);
 int wait(short int *statuscode);
+int mkdir(const char *path);
 int wait_pid(int pid, short int *statuscode);
 int getpid();
 int fork();

@@ -21,6 +21,7 @@ extern uint32_t kernel_memory_end;
 #define SYSCALL_WAITPID 13
 #define SYSCALL_WAIT 14
 #define SYSCALL_GETPID 15
+#define SYSCALL_MKDIR 16
 
 #define SYSCALL_ERR_INVALID_FD -1
 #define SYSCALL_ERR_WRITEONLY -2
