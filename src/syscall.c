@@ -9,7 +9,7 @@
 
 #define syscall_handlers_cap 64
 
-ksemaphore_t reader_lock;
+ksemaphore_t stdin_lock;
 syscall_handler_t syscall_handlers[syscall_handlers_cap];
 
 int32_t syscall_translate_fs_err(int32_t err)
@@ -266,7 +266,7 @@ int32_t syscall_read_disk(fd_t *fd, char *ptr, int32_t len)
 
 int32_t syscall_read_stdin(char *ptr, int32_t len)
 {
-    ksemaphore_wait(&reader_lock);
+    ksemaphore_wait(&stdin_lock);
     if (!input_list.size)
     {
         reader_task = multsk_curtask();
@@ -287,7 +287,7 @@ int32_t syscall_read_stdin(char *ptr, int32_t len)
         kqueue_pop(&input_list);
         kfree(input);
     }
-    ksemaphore_signal(&reader_lock);
+    ksemaphore_signal(&stdin_lock);
     return count;
 }
 
@@ -479,7 +479,7 @@ int32_t syscall_fork(_unused registers *regs)
 
 void syscalls_init()
 {
-    ksemaphore_init(&reader_lock, 1);
+    ksemaphore_init(&stdin_lock, 1);
     memset(syscall_handlers, 0, syscall_handlers_cap * sizeof(syscall_handler_t));
     syscall_handlers[SYSCALL_CLOSE] = syscall_close;
     syscall_handlers[SYSCALL_OPEN] = syscall_open;
