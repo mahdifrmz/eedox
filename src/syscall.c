@@ -457,15 +457,15 @@ int32_t syscall_exec(registers *regs)
         return syscall_translate_fs_err(rsl);
     }
 
-    uint32_t stack_ptr = regs->esp + USER_STACK_SIZE - 0x40;
-    place_args_vector((const char**)regs->ecx,&stack_ptr);
     uint32_t entry;
     rsl = prog_load(program, kernel_memory_end, &entry);
     kfree(program);
     if (rsl != 0)
     {
-        return SYSCALL_ERR_INVALID_LOAD_ADDRESS;
+        return SYSCALL_ERR_NOT_EXECUTABLE;
     }
+    uint32_t stack_ptr = regs->esp + USER_STACK_SIZE - 0x40;
+    place_args_vector((const char**)regs->ecx,&stack_ptr);
     regs->eip = entry;
     regs->useresp = stack_ptr;
     pathbuf_free(&path);

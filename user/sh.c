@@ -32,9 +32,15 @@ void execute_command(int arg_idx,char** arglist)
         }
         else{
             int rsl = exec(command,arglist);
-            if(rsl)
+            if(rsl < 0)
             {
-                printf("sh: failed to execute command!\n");
+                if(rsl == -9 /* kernel error code */)
+                {
+                    printf("sh: file '%s' not executable!\n",command);
+                }
+                else{
+                    printf("sh: executable not found!\n");
+                }
                 exit(0);
             }
         }

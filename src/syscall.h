@@ -31,7 +31,7 @@ extern uint32_t kernel_memory_end;
 #define SYSCALL_ERR_INVALID_PATH -6
 #define SYSCALL_ERR_NONEXISTING -7
 #define SYSCALL_ERR_HAS_CHILD -8
-#define SYSCALL_ERR_INVALID_LOAD_ADDRESS -9
+#define SYSCALL_ERR_NOT_EXECUTABLE -9
 #define SYSCALL_ERR_INVAL_CHILDPID -10
 
 typedef int32_t (*syscall_handler_t)(registers *);
