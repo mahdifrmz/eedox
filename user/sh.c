@@ -16,7 +16,10 @@ void execute_command(int arg_idx,char** arglist)
         {
             if(arg_idx >= 2)
             {
-                setcwd(arglist[1]);
+                if(setcwd(arglist[1]) != 0)
+                {
+                    printf("sh: directory '%s' does not exist\n",arglist[1]);
+                }
             }
             return;
         }
