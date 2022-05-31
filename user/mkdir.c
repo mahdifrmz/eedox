@@ -8,7 +8,12 @@ void error_message(const char* path)
 int fmain(int argc ,char** argv)
 {
     int status = 0;
-    for(int i=1;i<argc;i++)
+    if(argc == 1)
+    {
+        printf("mkdir: missing directory name\n");
+        status = 1;
+    }
+    else for(int i=1;i<argc;i++)
     {
         int rsl = opendir(argv[i]);
         if(rsl > 0)
