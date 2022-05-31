@@ -449,12 +449,14 @@ inode_t *fs_node_child(inode_t *node, const char *name)
     inode_t *child = inodelist_get(&pathbuf);
     if (child)
     {
+        pathbuf_free(&pathbuf);
         return child;
     }
     krwlock_read(&node->_lock);
     child = inodelist_get(&pathbuf);
     if (child)
     {
+        pathbuf_free(&pathbuf);
         return child;
     }
     child = inode_new(pathbuf);
