@@ -255,6 +255,13 @@ void inode_calculate_operation_bounds(inode_t *node, operation_bounds *operation
 void inode_realloc(inode_t *node, uint32_t sectors, inode_t *parent)
 {
     lba28_t new_index = brealloc(node->index, sectors + 1);
+    char *buffer = kmalloc(SECTOR_SIZE);
+    for(uint32_t i=0;i<node->alloc;i++)
+    {
+        ata_read(node->index + 1 + i,buffer);
+        ata_write(new_index + 1 + i,buffer);
+    }
+    kfree(buffer);
     node->index = new_index;
     node->alloc = sectors;
     inode_update(node);
