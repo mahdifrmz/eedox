@@ -634,7 +634,6 @@ int32_t fs_write(inode_t *node, const char *str, int32_t from, int32_t len)
     }
     fs_node_unlock(parent);
     fs_node_unlock(node);
-    fs_node_close(parent);
     return ret;
 }
 
