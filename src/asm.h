@@ -22,7 +22,7 @@ uint32_t asm_get_cr2();
 uint32_t asm_get_eip();
 uint32_t asm_get_esp();
 uint32_t asm_get_ebp();
-void asm_multsk_switch();
+void asm_task_switch();
 void asm_usermode(void *userprog);
 void asm_set_sps(uint32_t ebp, uint32_t esp);
 void asm_flush_TLB();

@@ -18,18 +18,18 @@
     global asm_get_eip
     global asm_get_ebp
     global asm_get_esp
-    global asm_multsk_switch
+    global asm_task_switch
     global asm_set_sps 
     global asm_flush_TLB
     global asm_flush_tss
     global asm_get_cr2
-    global multsk_sleep
+    global task_sleep
 
     extern eip_buffer
     extern ebp_buffer
     extern esp_buffer
     extern current_page_directory
-    extern multsk_switch
+    extern task_switch
 asm_outb:
     push ebp
     mov ebp, esp
@@ -149,7 +149,7 @@ asm_get_esp:
 asm_get_ebp:
     mov eax, ebp    
     ret
-asm_multsk_switch:
+asm_task_switch:
     add esp, 4
     mov eax, [esp_buffer]
     mov esp, eax
@@ -243,14 +243,14 @@ asm_insw:
     pop ebp 
     ret
 
-multsk_sleep:
+task_sleep:
     push ebp
     mov ebp, esp
 
     pusha
     pushf
     push 0x00000001
-    call multsk_switch
+    call task_switch
     add esp, 4
     popf
     popa

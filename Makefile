@@ -1,7 +1,7 @@
 CFLAGS = -g -Isrc -ffreestanding -Wall -Wextra -Werror
 CUSERFLAGS = -Iuser -ffreestanding -Wall -Wextra -Werror
 OBJECTS =\
-	build/multsk.o \
+	build/task.o \
 	build/kqueue.o \
 	build/util.o \
 	build/kutil.o \

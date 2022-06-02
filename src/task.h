@@ -1,5 +1,5 @@
-#ifndef MULTSK_H
-#define MULTSK_H
+#ifndef task_H
+#define task_H
 
 #include <stdint.h>
 #include <paging.h>
@@ -33,25 +33,24 @@ struct task_t
     uint8_t wait;
 };
 
-extern uint8_t multsk_flag;
+extern uint8_t multitasking_flag;
 
-void multsk_switch(uint32_t sleep);
-uint32_t multsk_fork();
-void multsk_init();
+void task_switch(uint32_t sleep);
+uint32_t task_fork();
+void multitasking_init();
 uint32_t multk_getpid();
-void multsk_awake(task_t *task);
-void multsk_yield();
-void multsk_sleep();
-task_t *multsk_curtask();
-void multsk_timer(registers *regs);
-void multsk_terminate();
-void multsk_free(task_t *task);
-task_t *multsk_find_zombie(task_t *task);
-void multsk_wait_all(task_t *task);
-task_t *multsk_gettask(uint32_t pid);
-void multsk_killtask(task_t *task);
-void multsk_orphan_all(task_t *task);
-void multsk_close_fd(uint32_t fd_id);
-void multsk_close_all_fds();
+void task_awake(task_t *task);
+void task_yield();
+void task_sleep();
+task_t *task_curtask();
+void task_timer(registers *regs);
+void task_free(task_t *task);
+task_t *task_find_zombie(task_t *task);
+void task_wait_all(task_t *task);
+task_t *task_gettask(uint32_t pid);
+void task_killtask(task_t *task);
+void task_orphan_all(task_t *task);
+void task_close_fd(uint32_t fd_id);
+void task_close_all_fds();
 
 #endif

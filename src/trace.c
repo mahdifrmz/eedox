@@ -1,7 +1,7 @@
 #include <trace.h>
 #include <kutil.h>
 #include <asm.h>
-#include <multsk.h>
+#include <task.h>
 
 fnrec *symtable_ptr = (fnrec *)&symtable;
 

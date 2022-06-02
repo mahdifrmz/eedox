@@ -1,4 +1,4 @@
-#include <multsk.h>
+#include <task.h>
 #include <kqueue.h>
 #include <kutil.h>
 #include <asm.h>
@@ -11,7 +11,7 @@ kqueue_t rr_queue;
 uint32_t eip_buffer, esp_buffer, ebp_buffer;
 extern page_directory_t *current_page_directory;
 extern tss_rec tss_entry;
-uint8_t multsk_flag = 0;
+uint8_t multitasking_flag = 0;
 uint32_t task_count = 0;
 task_t *current_task;
 uint32_t kernel_stack_ptr;
@@ -23,27 +23,19 @@ uint32_t multk_getpid()
     return current_task->pid;
 }
 
-void multsk_switch(uint32_t sleep)
+void task_switch(uint32_t sleep)
 {
     if (rr_queue.size == 1)
     {
         return;
     }
     task_t *curtask = (task_t *)kqueue_pop(&rr_queue);
-    if (sleep == 2) // termination
+    curtask->ebp = asm_get_ebp();
+    curtask->esp = asm_get_esp();
+    curtask->eip = asm_get_eip();
+    if (curtask->eip == 0xffffffff)
     {
-        multsk_free(curtask);
-    }
-    else
-    {
-        curtask->ebp = asm_get_ebp();
-        curtask->esp = asm_get_esp();
-        curtask->eip = asm_get_eip();
-
-        if (curtask->eip == 0xffffffff)
-        {
-            return;
-        }
+        return;
     }
     if (sleep == 0) // preemption
     {
@@ -55,15 +47,10 @@ void multsk_switch(uint32_t sleep)
     esp_buffer = nextask->esp;
     current_task = nextask;
     current_page_directory = current_task->page_dir;
-    asm_multsk_switch();
+    asm_task_switch();
 }
 
-void multsk_terminate()
-{
-    multsk_switch(2);
-}
-
-uint32_t multsk_fork()
+uint32_t task_fork()
 {
     task_t *curtask = (task_t *)kqueue_peek(&rr_queue);
     task_t *newtask = kmalloc(sizeof(task_t));
@@ -90,12 +77,12 @@ uint32_t multsk_fork()
     }
 }
 
-void multsk_awake(task_t *task)
+void task_awake(task_t *task)
 {
     kqueue_push(&rr_queue, (uint32_t)task);
 }
 
-task_t *multsk_curtask()
+task_t *task_curtask()
 {
     return (task_t *)kqueue_peek(&rr_queue);
 }
@@ -122,27 +109,27 @@ fd_table init_fdt()
     return table;
 }
 
-void multsk_free(task_t *task)
+void task_free(task_t *task)
 {
     pathbuf_free(&task->cwd);
     kfree(task->table.records);
     kfree(task->page_dir);
 }
 
-task_t *multsk_gettask(uint32_t pid)
+task_t *task_gettask(uint32_t pid)
 {
     return (task_t *)tasklist.buffer[pid];
 }
 
-void multsk_killtask(task_t *task)
+void task_killtask(task_t *task)
 {
     uint32_t pid = task->pid;
-    multsk_orphan_all(task);
-    multsk_free(task);
+    task_orphan_all(task);
+    task_free(task);
     tasklist.buffer[pid] = 0;
 }
 
-task_t *multsk_find_zombie(task_t *task)
+task_t *task_find_zombie(task_t *task)
 {
     for (uint32_t i = 0; i < tasklist.size; i++)
     {
@@ -155,7 +142,7 @@ task_t *multsk_find_zombie(task_t *task)
     return NULL;
 }
 
-void multsk_orphan_all(task_t *task)
+void task_orphan_all(task_t *task)
 {
     for (uint32_t i = 0; i < tasklist.size; i++)
     {
@@ -167,7 +154,7 @@ void multsk_orphan_all(task_t *task)
     }
 }
 
-void multsk_init()
+void multitasking_init()
 {
     task_t *first = kmalloc(sizeof(task_t));
     tasklist = vec_new();
@@ -177,7 +164,7 @@ void multsk_init()
     kqueue_push(&rr_queue, (uint32_t)first);
     current_task = first;
     tss_entry.esp0 = kernel_stack_ptr + KERNEL_STACK_SIZE;
-    multsk_flag = 1;
+    multitasking_flag = 1;
     first->table = init_fdt();
     first->cwd = pathbuf_root();
     first->wait = TASK_WAIT_NONE;
@@ -185,12 +172,12 @@ void multsk_init()
     first->chwait = NULL;
     first->parent = NULL;
     vec_push(&tasklist, (uint32_t)first);
-    load_int_handler(INTCODE_PIC, multsk_timer);
+    load_int_handler(INTCODE_PIC, task_timer);
 }
 
-void multsk_close_fd(uint32_t fd_id)
+void task_close_fd(uint32_t fd_id)
 {
-    task_t *task = multsk_curtask();
+    task_t *task = task_curtask();
     if (fd_id >= task->table.size)
     {
         return;
@@ -207,16 +194,16 @@ void multsk_close_fd(uint32_t fd_id)
     }
 }
 
-void multsk_close_all_fds()
+void task_close_all_fds()
 {
-    task_t* task = multsk_curtask();
+    task_t* task = task_curtask();
     for(uint32_t i=0;i<task->table.size;i++)
     {
-        multsk_close_fd(i);
+        task_close_fd(i);
     }
 }
 
-void multsk_timer(__attribute__((unused)) registers *regs)
+void task_timer(__attribute__((unused)) registers *regs)
 {
-    multsk_switch(0);
+    task_switch(0);
 }

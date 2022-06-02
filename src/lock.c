@@ -13,8 +13,8 @@ void ksemaphore_wait(ksemaphore_t *sem)
 {
     if (sem->value-- <= 0)
     {
-        kqueue_push(&sem->sq, (uint32_t)multsk_curtask());
-        multsk_sleep();
+        kqueue_push(&sem->sq, (uint32_t)task_curtask());
+        task_sleep();
     }
 }
 void ksemaphore_signal(ksemaphore_t *sem)
@@ -22,7 +22,7 @@ void ksemaphore_signal(ksemaphore_t *sem)
     sem->value++;
     if (sem->sq.size)
     {
-        multsk_awake((task_t *)kqueue_pop(&sem->sq));
+        task_awake((task_t *)kqueue_pop(&sem->sq));
     }
 }
 
@@ -31,15 +31,15 @@ void krwlock_read(krwlock *lock)
     if (lock->operation == KRWLOCK_WRITE ||
         (lock->operation == KRWLOCK_READ && lock->opq.size && kqueue_peek(&lock->opq) == KRWLOCK_WRITE))
     {
-        kqueue_push(&lock->procq, (uint32_t)multsk_curtask());
+        kqueue_push(&lock->procq, (uint32_t)task_curtask());
         kqueue_push(&lock->opq, KRWLOCK_READ);
-        multsk_sleep();
+        task_sleep();
     }
     lock->readers++;
     lock->operation = KRWLOCK_READ;
     while (lock->procq.size > 0 && kqueue_peek(&lock->opq) == KRWLOCK_READ)
     {
-        multsk_awake((task_t *)kqueue_pop(&lock->procq));
+        task_awake((task_t *)kqueue_pop(&lock->procq));
         kqueue_pop(&lock->opq);
     }
 }
@@ -47,9 +47,9 @@ void krwlock_write(krwlock *lock)
 {
     if (lock->operation != KRWLOCK_NONE)
     {
-        kqueue_push(&lock->procq, (uint32_t)multsk_curtask());
+        kqueue_push(&lock->procq, (uint32_t)task_curtask());
         kqueue_push(&lock->opq, KRWLOCK_WRITE);
-        multsk_sleep();
+        task_sleep();
     }
     lock->operation = KRWLOCK_WRITE;
 }
@@ -78,7 +78,7 @@ void krwlock_release(krwlock *lock)
     {
         if (lock->procq.size)
         {
-            multsk_awake((task_t *)kqueue_pop(&lock->procq));
+            task_awake((task_t *)kqueue_pop(&lock->procq));
             kqueue_pop(&lock->opq);
         }
         lock->operation = KRWLOCK_NONE;

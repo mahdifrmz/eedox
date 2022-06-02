@@ -4,7 +4,7 @@
 #include <idt.h>
 #include <kstring.h>
 #include <lock.h>
-#include <multsk.h>
+#include <task.h>
 #include <terminal.h>
 
 void keyboard_handler(registers *regs);

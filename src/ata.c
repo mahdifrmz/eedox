@@ -1,6 +1,6 @@
 #include <ata.h>
 #include <asm.h>
-#include <multsk.h>
+#include <task.h>
 #include <util.h>
 #include <lock.h>
 
@@ -79,8 +79,8 @@ void ata_read(uint32_t sector, void *buffer)
     asm_outb(ATA_REG_DH, 0xe0 | ((sector >> 24) & 0x0f));
     asm_outb(ATA_REG_CMD, ATA_CMD_READ_PIO);
 
-    ata_task = multsk_curtask();
-    multsk_sleep();
+    ata_task = task_curtask();
+    task_sleep();
     ksemaphore_signal(&disk_sem);
 }
 
@@ -111,8 +111,8 @@ void ata_write(uint32_t sector, void *buffer)
         asm_outw(ATA_REG_DATA, ((uint16_t *)buffer)[i++]);
     }
 
-    ata_task = multsk_curtask();
-    multsk_sleep();
+    ata_task = task_curtask();
+    task_sleep();
     ksemaphore_signal(&disk_sem);
 }
 
@@ -132,7 +132,7 @@ void ata_ihandler(__attribute__((unused)) registers *regs)
         }
         if (ata_task)
         {
-            multsk_awake(ata_task);
+            task_awake(ata_task);
             ata_task = NULL;
         }
     }

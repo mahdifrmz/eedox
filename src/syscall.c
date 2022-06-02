@@ -50,7 +50,7 @@ pathbuf_t resolve_path(pathbuf_t path)
     }
     else
     {
-        task_t* curtask = multsk_curtask();
+        task_t* curtask = task_curtask();
         pathbuf_t full = pathbuf_join(&curtask->cwd,&path);
         pathbuf_free(&path);
         return full;
@@ -61,17 +61,17 @@ int32_t syscall_wait(registers *regs)
 {
     int16_t *stref = (int16_t *)regs->ebx;
 
-    task_t *task = multsk_curtask();
-    task_t *child = multsk_find_zombie(task);
+    task_t *task = task_curtask();
+    task_t *child = task_find_zombie(task);
     if (!child)
     {
         task->wait = TASK_WAIT_ALL;
-        multsk_sleep();
+        task_sleep();
     }
     child = task->chwait;
     *stref = child->exit_status;
     uint32_t child_pid = child->pid;
-    multsk_killtask(child);
+    task_killtask(child);
     return child_pid;
 }
 
@@ -80,8 +80,8 @@ int32_t syscall_waitpid(registers *regs)
     uint32_t child_pid = regs->ebx;
     int16_t *stref = (int16_t *)regs->ecx;
 
-    task_t *task = multsk_curtask();
-    task_t *child = multsk_gettask(child_pid);
+    task_t *task = task_curtask();
+    task_t *child = task_gettask(child_pid);
     if (!child || task->parent != task)
     {
         return SYSCALL_ERR_INVAL_CHILDPID;
@@ -90,16 +90,16 @@ int32_t syscall_waitpid(registers *regs)
     {
         task->wait = TASK_WAIT_PID;
         task->chwait = child;
-        multsk_sleep();
+        task_sleep();
     }
     *stref = child->exit_status;
-    multsk_killtask(child);
+    task_killtask(child);
     return child_pid;
 }
 
 int32_t syscall_getcwd(registers *regs)
 {
-    task_t *task = multsk_curtask();
+    task_t *task = task_curtask();
     char *cwd = pathbuf_stringify(&task->cwd);
     char *buffer = (char *)regs->ebx;
     strcpy(buffer, cwd);
@@ -115,7 +115,7 @@ int32_t syscall_getpid(_unused registers *regs)
 
 int32_t syscall_setcwd(registers *regs)
 {
-    task_t *task = multsk_curtask();
+    task_t *task = task_curtask();
     pathbuf_t cwd = pathbuf_parse((const char *)regs->ebx);
     cwd = resolve_path(cwd);
     int8_t res;
@@ -132,23 +132,23 @@ int32_t syscall_setcwd(registers *regs)
 int32_t syscall_exit(registers *regs)
 {
     int16_t statuscode = regs->ebx;
-    task_t *task = multsk_curtask();
+    task_t *task = task_curtask();
     task_t *parent = task->parent;
     task->exit_status = statuscode;
-    multsk_close_all_fds();
+    task_close_all_fds();
     if ((parent->wait == TASK_WAIT_PID && parent->chwait == task) || parent->wait == TASK_WAIT_ALL)
     {
         parent->chwait = task;
         parent->wait = TASK_WAIT_NONE;
-        multsk_awake(parent);
+        task_awake(parent);
     }
-    multsk_sleep();
+    task_sleep();
     return 0;
 }
 
 int32_t syscall_open(registers *regs)
 {
-    task_t *task = multsk_curtask();
+    task_t *task = task_curtask();
     const char *path = (const char *)regs->ebx;
     pathbuf_t pathbuf = pathbuf_parse(path);
     pathbuf = resolve_path(pathbuf);
@@ -188,7 +188,7 @@ int32_t syscall_mkdir(registers *regs)
 
 int32_t syscall_opendir(registers *regs)
 {
-    task_t *task = multsk_curtask();
+    task_t *task = task_curtask();
     const char *path = (const char *)regs->ebx;
     pathbuf_t pathbuf = pathbuf_parse(path);
     pathbuf = resolve_path(pathbuf);
@@ -210,7 +210,7 @@ int32_t syscall_opendir(registers *regs)
 
 int32_t syscall_readdir(registers *regs)
 {
-    task_t *task = multsk_curtask();
+    task_t *task = task_curtask();
     uint32_t fd_id = regs->ebx;
     if (fd_id >= task->table.size)
     {
@@ -260,7 +260,7 @@ int32_t syscall_stat(registers *regs)
 
 int32_t syscall_close(registers *regs)
 {
-    task_t *task = multsk_curtask();
+    task_t *task = task_curtask();
     uint32_t fd_id = regs->ebx;
     if (fd_id >= task->table.size)
     {
@@ -271,7 +271,7 @@ int32_t syscall_close(registers *regs)
     {
         return SYSCALL_ERR_INVALID_FD;
     }
-    multsk_close_fd(fd_id);
+    task_close_fd(fd_id);
     return 0;
 }
 
@@ -292,8 +292,8 @@ int32_t syscall_read_stdin(char *ptr, int32_t len)
     ksemaphore_wait(&stdin_lock);
     if (!input_list.size)
     {
-        reader_task = multsk_curtask();
-        multsk_sleep();
+        reader_task = task_curtask();
+        task_sleep();
     }
     char *input = (char *)kqueue_peek(&input_list);
     uint32_t input_len = strlen(input);
@@ -319,7 +319,7 @@ int32_t syscall_read(registers *regs)
     int32_t len = regs->edx;
     char *ptr = (char *)regs->ecx;
 
-    task_t *task = multsk_curtask();
+    task_t *task = task_curtask();
     uint32_t fd_id = regs->ebx;
     if (fd_id >= task->table.size)
     {
@@ -371,7 +371,7 @@ int32_t syscall_write(registers *regs)
     int32_t len = regs->edx;
     char *ptr = (char *)regs->ecx;
 
-    task_t *task = multsk_curtask();
+    task_t *task = task_curtask();
     uint32_t fd_id = regs->ebx;
     if (fd_id >= task->table.size)
     {
@@ -433,7 +433,7 @@ void place_args_vector(const char** argv,uint32_t* stack)
 
 inode_t* exec_open(pathbuf_t* path,int8_t* rres)
 {
-    task_t* task = multsk_curtask();
+    task_t* task = task_curtask();
     pathbuf_t respath;
     pathbuf_t bindir = pathbuf_parse("/bin/");
     inode_t *binary;
@@ -497,7 +497,7 @@ int32_t syscall_exec(registers *regs)
 
 int32_t syscall_fork(_unused registers *regs)
 {
-    return multsk_fork();
+    return task_fork();
 }
 
 void syscalls_init()

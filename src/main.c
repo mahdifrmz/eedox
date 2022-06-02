@@ -8,7 +8,7 @@
 #include <kstring.h>
 #include <kutil.h>
 #include <vec.h>
-#include <multsk.h>
+#include <task.h>
 #include <kqueue.h>
 #include <fs.h>
 #include <syscall.h>
@@ -101,10 +101,10 @@ void kmain()
     timer_init(100);
     keyboard_init();
     syscalls_init();
-    multsk_init();
+    multitasking_init();
     load_int_handler(INTCODE_GPF, GPF_handler);
 
-    uint32_t pid = multsk_fork();
+    uint32_t pid = task_fork();
     if (pid == 1)
     {
         return;

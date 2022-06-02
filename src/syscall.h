@@ -2,7 +2,7 @@
 #define SYSCALL_H
 
 #include <idt.h>
-#include <multsk.h>
+#include <task.h>
 
 extern uint32_t keyboard_input_size;
 extern uint32_t kernel_memory_end;

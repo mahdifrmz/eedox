@@ -2,7 +2,7 @@
 #define MUTEX_H
 
 #include <kqueue.h>
-#include <multsk.h>
+#include <task.h>
 
 typedef struct
 {

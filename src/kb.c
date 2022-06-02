@@ -1,6 +1,6 @@
 #include <kb.h>
 #include <stdint.h>
-#include <multsk.h>
+#include <task.h>
 #include <util.h>
 #include <kstring.h>
 #include <lock.h>
@@ -94,9 +94,9 @@ void keyboard_eof()
     keyboard_input_size = 0;
     kqueue_push(&input_list, (uint32_t)kstring_str(&terminal_buffer));
     terminal_buffer = kstring_new();
-    if (reader_task && multsk_flag)
+    if (reader_task && multitasking_flag)
     {
-        multsk_awake(reader_task);
+        task_awake(reader_task);
         reader_task = NULL;
     }
 }
