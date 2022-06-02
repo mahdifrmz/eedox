@@ -7,9 +7,18 @@
 #define STDOUT 1
 #define STDIN 0
 
+typedef struct
+{
+    uint32_t index;
+    uint8_t isdir;
+    uint32_t size;
+    uint32_t blocks;
+} stat_t;
+
 int write(int fd, const void *buffer, int length);
 int read(int fd, const void *buffer, int length);
 int open(const char *path, int flags);
+int stat(const char *path,stat_t* stat);
 int close(int fd);
 int opendir(const char *path);
 int readdir(int fd, char* buffer);

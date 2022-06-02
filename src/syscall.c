@@ -235,6 +235,29 @@ int32_t syscall_readdir(registers *regs)
     return ret;
 }
 
+int32_t syscall_stat(registers *regs)
+{
+    const char *path = (const char *)regs->ebx;
+    stat_t* stat = (stat_t*) regs->ecx;
+    pathbuf_t pathbuf = pathbuf_parse(path);
+    pathbuf = resolve_path(pathbuf);
+    int8_t res;
+    int32_t status = 0;
+    inode_t* node = fs_open(&pathbuf,0,0,2,0,&res);
+    if(res != 0)
+    {
+        status = syscall_translate_fs_err(res);
+    }
+    else{
+        stat->index = node->index;
+        stat->isdir = node->type == inode_type_dir;
+        stat->size = node->size;
+        stat->blocks = node->alloc + 1;
+    }
+    pathbuf_free(&pathbuf);
+    return status;
+}
+
 int32_t syscall_close(registers *regs)
 {
     task_t *task = multsk_curtask();
@@ -487,6 +510,7 @@ void syscalls_init()
     syscall_handlers[SYSCALL_READ] = syscall_read;
     syscall_handlers[SYSCALL_READDIR] = syscall_readdir;
     syscall_handlers[SYSCALL_OPENDIR] = syscall_opendir;
+    syscall_handlers[SYSCALL_STAT] = syscall_stat;
     syscall_handlers[SYSCALL_EXEC] = syscall_exec;
     syscall_handlers[SYSCALL_FORK] = syscall_fork;
     syscall_handlers[SYSCALL_GETCWD] = syscall_getcwd;

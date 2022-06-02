@@ -596,7 +596,7 @@ inode_t *fs_open(pathbuf_t *pathbuf, uint8_t create, uint8_t truncate, uint8_t d
     }
     else
     {
-        if (dir != is_dir)
+        if (dir != 2 && dir != is_dir)
         {
             *result = FS_ERR_INVALID_PATH;
         }

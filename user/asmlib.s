@@ -69,6 +69,7 @@ section .text
     SYSCALL_2R close, 5
     SYSCALL_2R opendir, 6
     SYSCALL_3R readdir, 7
+    SYSCALL_3R stat, 8
     SYSCALL_3R exec, 9
     SYSCALL_1R fork, 10
     SYSCALL_2R getcwd, 11

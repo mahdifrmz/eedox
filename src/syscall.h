@@ -14,6 +14,7 @@ extern uint32_t kernel_memory_end;
 #define SYSCALL_CLOSE 5
 #define SYSCALL_OPENDIR 6
 #define SYSCALL_READDIR 7
+#define SYSCALL_STAT 8
 #define SYSCALL_EXEC 9
 #define SYSCALL_FORK 10
 #define SYSCALL_GETCWD 11
@@ -35,6 +36,14 @@ extern uint32_t kernel_memory_end;
 #define SYSCALL_ERR_INVAL_CHILDPID -10
 
 typedef int32_t (*syscall_handler_t)(registers *);
+
+typedef struct
+{
+    uint32_t index;
+    uint8_t isdir;
+    uint32_t size;
+    uint32_t blocks;
+} stat_t;
 
 void syscall_test();
 int32_t syscall_translate_fs_err(int32_t err);
