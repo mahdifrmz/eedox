@@ -26,7 +26,7 @@ int32_t prog_load(const char *file, uint32_t laddr, uint32_t *entry)
         {
             kprintf("KERNEL FAILURE: invalid load address for elf file\n");
         }
-        for (uint32_t i = start; i < end; i += 0x1000)
+        for (uint32_t i = start; i <= end; i += 0x1000)
         {
             page_t *page = get_page(i, 0, current_page_directory);
             if (!page->frame)
