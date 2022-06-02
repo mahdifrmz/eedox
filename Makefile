@@ -59,7 +59,7 @@ build/vdsk.img: ${USER_BINS} fsgen.js
 
 build/kernel: ${OBJECTS} link.ld trace.py
 	ld -T link.ld -m elf_i386 ${OBJECTS} -o $@
-	python3 trace.py | dd if=/dev/stdin of=build/kernel bs=4096 count=8 seek=9 conv=notrunc 
+	python3 trace.py | dd if=/dev/stdin of=build/kernel bs=4096 count=8 seek=12 conv=notrunc 
 	cp $@ ./iso/boot/kernel
 
 build/user/libstd.a: ${STDLIB_SRC}

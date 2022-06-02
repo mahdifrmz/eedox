@@ -7,7 +7,7 @@ SECTIONS
     code = .; _code = .; __code = .;
     build/loader.o(.mbhead)
     *(.text)
-    . = ALIGN(4096);
+    . = 0x102000;
   }
 
   .data :
