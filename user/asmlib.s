@@ -78,3 +78,4 @@ section .text
     SYSCALL_2R $wait, 14
     SYSCALL_1R getpid, 15
     SYSCALL_2R mkdir, 16
+    SYSCALL_2R sbrk, 17

@@ -29,6 +29,7 @@ int exec(const char *path,char* argv []);
 int wait(short int *statuscode);
 int mkdir(const char *path);
 int wait_pid(int pid, short int *statuscode);
+void* sbrk(int offset);
 int getpid();
 int fork();
 

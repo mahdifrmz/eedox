@@ -495,6 +495,11 @@ int32_t syscall_exec(registers *regs)
     return 0;
 }
 
+int32_t syscall_sbrk(registers *regs)
+{
+    return task_curtask()->brk += regs->ebx;
+}
+
 int32_t syscall_fork(_unused registers *regs)
 {
     return task_fork();
@@ -520,5 +525,6 @@ void syscalls_init()
     syscall_handlers[SYSCALL_EXIT] = syscall_exit;
     syscall_handlers[SYSCALL_GETPID] = syscall_getpid;
     syscall_handlers[SYSCALL_MKDIR] = syscall_mkdir;
+    syscall_handlers[SYSCALL_SBRK] = syscall_sbrk;
     load_int_handler(INTCODE_SYSCALL, syscalls_handle);
 }

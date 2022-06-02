@@ -2,6 +2,7 @@
 #include <util.h>
 #include <paging.h>
 #include <elf.h>
+#include <task.h>
 #include <kutil.h>
 
 int32_t prog_load(const char *file, uint32_t laddr, uint32_t *entry)
@@ -16,6 +17,7 @@ int32_t prog_load(const char *file, uint32_t laddr, uint32_t *entry)
     }
     Elf32_Phdr *prog_arr = (Elf32_Phdr *)(file + elf_header.e_phoff);
     uint32_t prog_arrlen = elf_header.e_phnum;
+    uint32_t brk = 0;
     for (uint32_t i = 1; i < prog_arrlen; i++)
     {
         uint32_t start = prog_arr[i].p_vaddr;
@@ -33,7 +35,17 @@ int32_t prog_load(const char *file, uint32_t laddr, uint32_t *entry)
             {
                 alloc_frame(page, 1, 0);
             }
+            if(brk < end)
+            {
+                brk = end;
+                if(brk % 0x1000)
+                {
+                    brk &= 0xfffff000;
+                    brk += 0x1000;
+                }
+            }
         }
+        task_curtask()->brk = brk;
         const char *data = file + prog_arr[i].p_offset;
         memcpy((void *)start, data, prog_arr[i].p_memsz);
     }

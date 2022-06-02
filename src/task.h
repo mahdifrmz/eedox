@@ -24,6 +24,7 @@ struct task_t
     uint32_t eip;
     uint32_t esp;
     uint32_t ebp;
+    uint32_t brk;
     page_directory_t *page_dir;
     fd_table table;
     pathbuf_t cwd;

@@ -55,6 +55,7 @@ uint32_t task_fork()
     task_t *curtask = (task_t *)kqueue_peek(&rr_queue);
     task_t *newtask = kmalloc(sizeof(task_t));
     newtask->pid = task_count++;
+    newtask->brk = curtask->brk;
     newtask->ebp = asm_get_ebp();
     newtask->esp = asm_get_esp();
     newtask->eip = asm_get_eip();
@@ -160,6 +161,7 @@ void multitasking_init()
     tasklist = vec_new();
     first->pid = task_count++;
     first->page_dir = current_page_directory;
+    first->brk = 0;
     rr_queue = kqueue_new();
     kqueue_push(&rr_queue, (uint32_t)first);
     current_task = first;
