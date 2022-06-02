@@ -504,7 +504,6 @@ int32_t syscall_sbrk(registers *regs)
         page_t *page = get_page(i, 0, current_page_directory);
         if (!page->frame)
         {
-            kprintf("KSBRK: %x\n",i);
             alloc_frame(page, 1, 0);
         }
     }
