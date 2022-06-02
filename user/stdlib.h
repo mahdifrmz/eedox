@@ -2,6 +2,7 @@
 #define STDLIB_H
 
 #include <stdint.h>
+#include <alloc.h>
 #include <../src/util.h>
 
 #define STDOUT 1
@@ -32,6 +33,10 @@ int wait_pid(int pid, short int *statuscode);
 void* sbrk(int offset);
 int getpid();
 int fork();
+
+void* malloc(int size);
+void free(void* ptr);
+void* realloc(void* ptr,int size);
 
 int _printf(const char *message, va_list args);
 int printf(const char *message, ...);

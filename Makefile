@@ -64,9 +64,10 @@ build/kernel: ${OBJECTS} link.ld trace.py
 
 build/user/libstd.a: ${STDLIB_SRC}
 	i686-elf-gcc ${CUSERFLAGS} -c user/stdlib.c -o build/user/stdlib.o 
+	i686-elf-gcc ${CUSERFLAGS} -c user/alloc.c -o build/user/alloc.o 
 	i686-elf-gcc ${CUSERFLAGS} -Isrc -c src/util.c -o build/user/util.o
 	nasm -f elf32 -o build/user/asmlib.o user/asmlib.s
-	ar rcs build/user/libstd.a build/user/asmlib.o build/user/stdlib.o build/user/util.o
+	ar rcs build/user/libstd.a build/user/asmlib.o build/user/alloc.o build/user/stdlib.o build/user/util.o
 
 build/user/%: user/%.c build/user/libstd.a
 	i686-elf-gcc ${CUSERFLAGS} -c $< -o $@.o
