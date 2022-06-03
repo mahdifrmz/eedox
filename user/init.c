@@ -2,13 +2,13 @@
 
 int fmain()
 {
-    int32_t shell_pid = fork();
+    int shell_pid = fork();
     if (shell_pid != 0)
     {
         while (1)
         {
             int16_t s;
-            int32_t pid = wait(&s);
+            int pid = wait(&s);
             if(pid == shell_pid)
             {
                 pid = fork();

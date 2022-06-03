@@ -70,6 +70,7 @@ void free(void* ptr)
 {
     heap_dealloc(&heap,ptr);
 }
+
 void* realloc(void* ptr,int size)
 {
     void* new_ptr = heap_realloc(&heap,ptr,size,4);
