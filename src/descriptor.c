@@ -33,6 +33,13 @@ uint32_t fd_table_add(fd_table *table, fd_t fd)
     return index;
 }
 
+uint32_t fd_table_dup(fd_table *table, uint32_t index)
+{
+    if(index >= table->size)
+        return -1;
+    return fd_table_add(table,fd_table_clone_entry(&table->records[index]));
+}
+
 void fd_table_rem(fd_table *table, uint32_t index)
 {
     table->records[index].isopen = 0;
@@ -48,7 +55,7 @@ fd_table fd_table_clone(fd_table *table)
     {
         if(table->records[i].isopen)
         {
-            new_table.records[i] = fd_table_onclone_entry(&table->records[i]);
+            new_table.records[i] = fd_table_clone_entry(&table->records[i]);
         }
         else{
             new_table.records[i].isopen = 0;
@@ -85,7 +92,7 @@ void fd_table_close(fd_table* table, uint32_t fd_id)
     }
 }
 
-fd_t fd_table_onclone_entry(fd_t* fd)
+fd_t fd_table_clone_entry(fd_t* fd)
 {
     if(fd->kind == FD_KIND_PIPE)
     {

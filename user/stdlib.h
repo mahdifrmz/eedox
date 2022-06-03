@@ -34,6 +34,7 @@ void* sbrk(int offset);
 int getpid();
 int fork();
 int pipe(int* fds);
+int dup(int fd);
 
 void* malloc(int size);
 void free(void* ptr);

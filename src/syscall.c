@@ -543,6 +543,21 @@ int32_t syscall_pipe(registers *regs)
     return 0;
 }
 
+int32_t syscall_dup(registers *regs)
+{
+    uint32_t index = regs->ebx;
+    fd_table* table = &task_curtask()->table;
+    if(index >= table->size)
+    {
+        return SYSCALL_ERR_INVALID_FD;
+    }
+    if(!table->records[index].isopen)
+    {
+        return SYSCALL_ERR_INVALID_FD;
+    }
+    return fd_table_dup(table,index);
+}
+
 void syscalls_init()
 {
     ksemaphore_init(&stdin_lock, 1);
@@ -565,5 +580,6 @@ void syscalls_init()
     syscall_handlers[SYSCALL_MKDIR] = syscall_mkdir;
     syscall_handlers[SYSCALL_SBRK] = syscall_sbrk;
     syscall_handlers[SYSCALL_PIPE] = syscall_pipe;
+    syscall_handlers[SYSCALL_DUP] = syscall_dup;
     load_int_handler(INTCODE_SYSCALL, syscalls_handle);
 }

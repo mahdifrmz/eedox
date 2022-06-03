@@ -29,7 +29,8 @@ typedef struct
 } fd_table;
 
 uint32_t fd_table_add(fd_table *table, fd_t fd);
-fd_t fd_table_onclone_entry(fd_t* fd);
+fd_t fd_table_clone_entry(fd_t* fd);
+uint32_t fd_table_dup(fd_table *table, uint32_t index);
 void fd_table_rem(fd_table *table, uint32_t index);
 fd_table fd_table_create(uint32_t inital_size);
 fd_table fd_table_clone(fd_table *table);

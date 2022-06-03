@@ -80,3 +80,4 @@ section .text
     SYSCALL_2R mkdir, 16
     SYSCALL_2R sbrk, 17
     SYSCALL_2R pipe, 18
+    SYSCALL_2R dup, 19
