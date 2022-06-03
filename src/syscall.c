@@ -6,6 +6,7 @@
 #include <kb.h>
 #include <fs.h>
 #include <prog.h>
+#include <pipe.h>
 
 #define syscall_handlers_cap 64
 
@@ -271,7 +272,7 @@ int32_t syscall_close(registers *regs)
     {
         return SYSCALL_ERR_INVALID_FD;
     }
-    task_close_fd(fd_id);
+    fd_table_close(&task->table,fd_id);
     return 0;
 }
 
@@ -342,6 +343,10 @@ int32_t syscall_read(registers *regs)
     {
         return syscall_read_stdin(ptr, len);
     }
+    else if(fd->kind == FD_KIND_PIPE)
+    {
+        return pipe_read((pipe_t*)fd->ptr,ptr,len);
+    }
     else
     {
         return syscall_read_disk(fd, ptr, len);
@@ -393,6 +398,11 @@ int32_t syscall_write(registers *regs)
     if (fd->kind == FD_KIND_STDOUT)
     {
         return syscall_write_stdout(ptr, len);
+    }
+    else if(fd->kind == FD_KIND_PIPE)
+    {
+        pipe_write((pipe_t*)fd->ptr,ptr,len);
+        return len;
     }
     else
     {
@@ -516,6 +526,23 @@ int32_t syscall_fork(_unused registers *regs)
     return task_fork();
 }
 
+int32_t syscall_pipe(registers *regs)
+{
+    pipe_t* pipe = kmalloc(sizeof(pipe_t));
+    *pipe = pipe_new();
+    uint32_t* fd_buffer = (uint32_t*) regs->ebx;
+    fd_t fd;
+    fd.isopen = 1;
+    fd.pos = 0;
+    fd.kind = FD_KIND_PIPE;
+    fd.ptr = pipe;
+    fd.access = FD_ACCESS_READ;
+    fd_buffer[0] = fd_table_add(&task_curtask()->table,fd);
+    fd.access = FD_ACCESS_WRITE;
+    fd_buffer[1] = fd_table_add(&task_curtask()->table,fd);
+    return 0;
+}
+
 void syscalls_init()
 {
     ksemaphore_init(&stdin_lock, 1);
@@ -537,5 +564,6 @@ void syscalls_init()
     syscall_handlers[SYSCALL_GETPID] = syscall_getpid;
     syscall_handlers[SYSCALL_MKDIR] = syscall_mkdir;
     syscall_handlers[SYSCALL_SBRK] = syscall_sbrk;
+    syscall_handlers[SYSCALL_PIPE] = syscall_pipe;
     load_int_handler(INTCODE_SYSCALL, syscalls_handle);
 }

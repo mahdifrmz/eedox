@@ -1,5 +1,7 @@
 #include <descriptor.h>
 #include <kutil.h>
+#include <pipe.h>
+#include <fs.h>
 
 fd_table fd_table_create(uint32_t inital_size)
 {
@@ -42,6 +44,58 @@ fd_table fd_table_clone(fd_table *table)
     new_table.cap = table->cap;
     new_table.size = table->size;
     new_table.records = kmalloc(new_table.cap * sizeof(fd_t));
-    memcpy(new_table.records, table->records, table->size * sizeof(fd_t));
+    for(uint32_t i=0;i<table->size;i++)
+    {
+        if(table->records[i].isopen)
+        {
+            new_table.records[i] = fd_table_onclone_entry(&table->records[i]);
+        }
+        else{
+            new_table.records[i].isopen = 0;
+        }
+    }
     return new_table;
+}
+
+void fd_table_close(fd_table* table, uint32_t fd_id)
+{
+    if (fd_id >= table->size)
+    {
+        return;
+    }
+    fd_t *fd = &table->records[fd_id];
+    if (!fd->isopen)
+    {
+        return;
+    }
+    fd_table_rem(table, fd_id);
+    if (fd->kind == FD_KIND_DISK || fd->kind == FD_KIND_DIR)
+    {
+        fs_close(fd->ptr);
+    }
+    else if(fd->kind == FD_KIND_PIPE)
+    {
+        if(fd->access == FD_ACCESS_READ)
+        {
+            pipe_close_rd(fd->ptr);
+        }
+        else{
+            pipe_close_wr(fd->ptr);
+        }
+    }
+}
+
+fd_t fd_table_onclone_entry(fd_t* fd)
+{
+    if(fd->kind == FD_KIND_PIPE)
+    {
+        pipe_t* pipe = (pipe_t*)fd->ptr;
+        (*(fd->access==FD_ACCESS_READ?&pipe->reader_count:&pipe->writer_count))++;
+    }
+    else if(fd->kind == FD_KIND_DISK || fd->kind == FD_KIND_DIR)
+    {
+        inode_t* node = (inode_t*)fd->ptr;
+        node->_refs++;
+    }
+    return *fd;
 }

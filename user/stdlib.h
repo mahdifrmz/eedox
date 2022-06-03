@@ -33,6 +33,7 @@ int wait_pid(int pid, short int *statuscode);
 void* sbrk(int offset);
 int getpid();
 int fork();
+int pipe(int* fds);
 
 void* malloc(int size);
 void free(void* ptr);

@@ -177,31 +177,15 @@ void multitasking_init()
     load_int_handler(INTCODE_PIC, task_timer);
 }
 
-void task_close_fd(uint32_t fd_id)
-{
-    task_t *task = task_curtask();
-    if (fd_id >= task->table.size)
-    {
-        return;
-    }
-    fd_t *fd = &task->table.records[fd_id];
-    if (!fd->isopen)
-    {
-        return;
-    }
-    fd_table_rem(&task->table, fd_id);
-    if (fd->kind == FD_KIND_DISK || fd->kind == FD_KIND_DIR)
-    {
-        fs_close(fd->ptr);
-    }
-}
-
 void task_close_all_fds()
 {
     task_t* task = task_curtask();
     for(uint32_t i=0;i<task->table.size;i++)
     {
-        task_close_fd(i);
+        if(task->table.records[i].isopen)
+        {
+            fd_table_close(&task->table,i);
+        }
     }
 }
 
