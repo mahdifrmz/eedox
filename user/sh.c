@@ -2,18 +2,31 @@
 #include <llist.h>
 
 #define BUFFER_SIZE 1024
-#define ARG_MAX_COUNT 16
 
-char buffer[BUFFER_SIZE];
-char* arglist [ARG_MAX_COUNT];
-int arg_idx = 0;
-    
-void execute_command()
+char* readline()
 {
-    if(arg_idx == 0)
+    llist_t chlist = llist_create();
+    int strlen = 0;
+    while(1)
     {
-        return;
+        char c;
+        int rsl = read(STDIN,&c,1);
+        if(!rsl) break;
+        strlen++;
+        llist_bpush(&chlist,(int)c);
+        if(c == '\n') break;
     }
+    char* line = malloc(strlen + 1);
+    line[strlen] = 0;
+    for(int i=0;i<strlen;i++)
+    {
+        line[i] = (char)llist_fpop(&chlist);
+    }
+    return line;
+}
+
+int builtins(char** arglist,int argslen)
+{
     const char* command = arglist[0];
     if(strcmp(command,"exit") == 0)
     {
@@ -21,15 +34,22 @@ void execute_command()
     }
     if(strcmp(command,"cd") == 0)
     {
-        if(arg_idx >= 2)
+        if(argslen >= 2)
         {
             if(setcwd(arglist[1]) != 0)
             {
                 printf("sh: directory '%s' does not exist\n",arglist[1]);
             }
         }
-        return;
+        return 1;
     }
+    return 0;
+}
+
+void execute_command(char** arglist, int argslen)
+{
+    if(argslen == 0)return;
+    if(builtins(arglist,argslen)) return;
     int pid = fork();
     if(pid)
     {
@@ -39,8 +59,10 @@ void execute_command()
         {
             printf("sh: command ended with error!\n");
         }
+        free(arglist);
     }
     else{
+        const char* command = arglist[0];
         int rsl = exec(command,arglist);
         if(rsl < 0)
         {
@@ -56,23 +78,19 @@ void execute_command()
     }
 }
 
-void parse_input()
+llist_t parse_input(char* line)
 {
-    arg_idx = 0;
-    for(int i=0;i<ARG_MAX_COUNT;i++)
-    {
-        arglist[i] = NULL;
-    } 
+    llist_t tokens = llist_create();
     char* arg_ptr = NULL;
     for(int i=0;;i++)
     {
-        if(buffer[i] == ' ' || buffer[i] == '\n' || buffer[i] == 0)
+        if(line[i] == ' ' || line[i] == '\n' || line[i] == 0)
         {
-            int flag = buffer[i] == 0 ? 1 : 0;
+            int flag = line[i] == 0 ? 1 : 0;
             if(arg_ptr)
             {
-                buffer[i] = 0;
-                arglist[arg_idx++] = arg_ptr;
+                line[i] = 0;
+                llist_bpush(&tokens,(int)arg_ptr);
                 arg_ptr = NULL;
             }
             if(flag)
@@ -82,9 +100,10 @@ void parse_input()
         }
         else if (!arg_ptr)
         {
-            arg_ptr = buffer + i;
+            arg_ptr = line + i;
         }
     }
+    return tokens;
 }
 
 int fmain()
@@ -94,14 +113,19 @@ int fmain()
     {
         getcwd(cwd);
         printf("%s$ ",cwd);
-        int len = read(STDIN, buffer, BUFFER_SIZE);
-        if(!len)
+        char* line = readline();
+        llist_t tokens = parse_input(line);
+        
+        int argslen = llist_size(&tokens);
+        char** arglist = malloc((argslen + 1) * sizeof(char*));
+        for(int i=0;i<argslen;i++)
         {
-            break;
+            arglist[i] = (char*)llist_fpop(&tokens);
         }
-        buffer[len] = 0;
-        parse_input();
-        execute_command();
+        arglist[argslen] = NULL;
+
+        execute_command(arglist,argslen);
+        free(line);
     }
     return 0;
 }
