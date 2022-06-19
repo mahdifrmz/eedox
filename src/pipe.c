@@ -1,16 +1,20 @@
 #include <pipe.h>
 
-void pipe_write(pipe_t* pipe,const char* buffer,uint32_t len)
+void pipe_write(pipe_t *pipe, const char *buffer, uint32_t len)
 {
-    char* buf = (char*)kmalloc(len+1);
-    memcpy(buf,buffer,len);
-    buf[len]=0;
-    kqueue_push(&pipe->list,(uint32_t)buf);
+    if (pipe->reader_count == 0)
+        return;
+    char *buf = (char *)kmalloc(len + 1);
+    memcpy(buf, buffer, len);
+    buf[len] = 0;
+    kqueue_push(&pipe->list, (uint32_t)buf);
     ksemaphore_signal(&pipe->lock);
 }
 
-uint32_t pipe_read(pipe_t* pipe,char* buffer,uint32_t len)
+uint32_t pipe_read(pipe_t *pipe, char *buffer, uint32_t len)
 {
+    if (pipe->list.size == 0 && pipe->writer_count == 0)
+        return 0;
     ksemaphore_wait(&pipe->lock);
     char *input = (char *)kqueue_peek(&pipe->list);
     uint32_t input_len = strlen(input);
@@ -37,32 +41,32 @@ pipe_t pipe_new()
     pipe.reader_count = 1;
     pipe.writer_count = 1;
     pipe.list = kqueue_new();
-    ksemaphore_init(&pipe.lock,0);
+    ksemaphore_init(&pipe.lock, 0);
     return pipe;
 }
 
-void pipe_destroy(pipe_t* pipe)
+void pipe_destroy(pipe_t *pipe)
 {
-    while(pipe->list.size)
+    while (pipe->list.size)
     {
-        kfree((void*)kqueue_pop(&pipe->list));
+        kfree((void *)kqueue_pop(&pipe->list));
     }
     kfree(pipe);
 }
 
-void pipe_close_rd(pipe_t* pipe)
+void pipe_close_rd(pipe_t *pipe)
 {
     pipe->reader_count--;
-    if(!pipe->reader_count && !pipe->writer_count)
+    if (!pipe->reader_count && !pipe->writer_count)
     {
         pipe_destroy(pipe);
     }
 }
 
-void pipe_close_wr(pipe_t* pipe)
+void pipe_close_wr(pipe_t *pipe)
 {
-    pipe->reader_count--;
-    if(!pipe->reader_count && !pipe->writer_count)
+    pipe->writer_count--;
+    if (!pipe->reader_count && !pipe->writer_count)
     {
         pipe_destroy(pipe);
     }

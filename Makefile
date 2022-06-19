@@ -40,6 +40,7 @@ USER_BINS =\
 	build/user/mkdir \
 	build/user/wc \
 	build/user/stat \
+	build/user/sample \
 	build/user/cp
 STDLIB_SRC=\
 	user/stdlib.c \
