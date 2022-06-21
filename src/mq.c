@@ -21,6 +21,10 @@ pipe_t* mqlist_open(mqlist_t *list,const char* name)
             {
                 *ent_pipe = pipe_new();
             }
+            else{
+                ent_pipe->reader_count++;
+                ent_pipe->writer_count++;
+            }
             return ent_pipe;
         }
         if(free_index == (uint32_t)-1 && ent_pipe->dead)
@@ -36,7 +40,7 @@ pipe_t* mqlist_open(mqlist_t *list,const char* name)
     }
     pipe_t* pipe = (pipe_t*)kmalloc(sizeof(pipe_t));
     *pipe = pipe_new();
-    list->names.buffer[free_index] = (uint32_t)name;
+    list->names.buffer[free_index] = (uint32_t)strdup(name);
     list->pipes.buffer[free_index] = (uint32_t)pipe;
     return pipe;
 }

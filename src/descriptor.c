@@ -84,13 +84,13 @@ void fd_table_close(fd_table* table, uint32_t fd_id)
     {
         if(fd->access == FD_ACCESS_READ)
         {
-            if(pipe_close_rd(fd->ptr) && fd->kind == FD_KIND_MQ)
+            if(pipe_close_rd(fd->ptr) && fd->kind != FD_KIND_MQ)
             {
                 kfree(fd->ptr);
             }
         }
         else{
-            if(pipe_close_wr(fd->ptr) && fd->kind == FD_KIND_MQ)
+            if(pipe_close_wr(fd->ptr) && fd->kind != FD_KIND_MQ)
             {
                 kfree(fd->ptr);
             }

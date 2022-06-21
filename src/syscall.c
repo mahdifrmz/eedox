@@ -345,7 +345,7 @@ int32_t syscall_read(registers *regs)
     {
         return syscall_read_stdin(ptr, len);
     }
-    else if(fd->kind == FD_KIND_PIPE)
+    else if(fd->kind == FD_KIND_PIPE || fd->kind == FD_KIND_MQ)
     {
         return pipe_read((pipe_t*)fd->ptr,ptr,len);
     }
@@ -401,7 +401,7 @@ int32_t syscall_write(registers *regs)
     {
         return syscall_write_stdout(ptr, len);
     }
-    else if(fd->kind == FD_KIND_PIPE)
+    else if(fd->kind == FD_KIND_PIPE || fd->kind == FD_KIND_MQ)
     {
         pipe_write((pipe_t*)fd->ptr,ptr,len);
         return len;
