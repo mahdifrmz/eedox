@@ -61,7 +61,7 @@ build/os.iso: build/kernel build/vdsk.img
 
 build/vdsk.img: ${USER_BINS} fsgen.js
 	qemu-img create -fraw build/vdsk.img 16m
-	node fsgen.js build/binaries ${USER_BINS}
+	node fsgen.js build/binaries
 	dd if=build/binaries of=build/vdsk.img conv=notrunc
 
 build/kernel: ${OBJECTS} link.ld trace.py

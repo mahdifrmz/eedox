@@ -55,7 +55,7 @@ loader:                         ; the loader label (defined as entry point in li
 inldr_start:
     push `t\0\0\0`
     push `/ini`
-    push `/bin`
+    push `/etc`
     mov ebx, esp
     push 0x0
     mov ecx, esp

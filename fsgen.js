@@ -16,27 +16,77 @@ function sizeToAlloc(s)
     }
 }
 
-let bins = {}
-
-for (arg of process.argv.slice(3))
+function loadFile(file)
 {
-    let buf = fs.readFileSync(arg)
+    let buf;
+    if(file.bin != undefined)
+    {
+        buf = fs.readFileSync(`./build/user/${file.bin}`)
+    }
+    else{
+        buf = Buffer.from(file.text)
+    }
     const size = buf.length
     buf = Buffer.concat([buf,Buffer.alloc(sizeToAlloc(buf.length)*512 - buf.length)])
-    bins[path.basename(arg)] = {
+    return {
         kind:NODEKIND_FILE,
         content:buf,
         size
     }
 }
 
+const binlist = [
+	'sh',
+	'echo',
+	'cat',
+	'ls',
+	'tee',
+	'mkdir',
+	'wc',
+	'stat',
+	'cp',
+]
+
+let bins = {}
+
+for(const b of binlist)
+{
+    bins[b] = {kind:NODEKIND_FILE,bin:b}
+}
+
 let fs_tree = {
     children:{
-        home:{kind:NODEKIND_DIR,children:{}},
-        bin:{kind:NODEKIND_DIR,children:bins}
+        home:{kind:NODEKIND_DIR,children:{
+            sample:{kind:NODEKIND_FILE,bin:'sample'},
+            upclnt:{kind:NODEKIND_FILE,bin:'upclnt'},
+        }},
+        bin:{kind:NODEKIND_DIR,children:bins},
+        etc:{kind:NODEKIND_DIR,children:{
+            init:{kind:NODEKIND_FILE,bin:'init'},
+            upcd:{kind:NODEKIND_FILE,bin:'upcd'},
+            services:{kind:NODEKIND_FILE,text:'/etc/upcd\n'},
+        }}
     },
     kind:NODEKIND_DIR
 }
+
+function loadTree(node)
+{
+    if(node.kind == NODEKIND_FILE)
+    {
+        return loadFile(node)
+    }
+    else
+    {
+        for(const e in node.children)
+        {
+            node.children[e] = loadTree(node.children[e])
+        }
+        return node
+    }
+}
+
+fs_tree = loadTree(fs_tree)
 
 let nodes = []
 

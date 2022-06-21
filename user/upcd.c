@@ -19,8 +19,6 @@ char f(char c)
 
 int fmain()
 {
-    printf("daemon started\n");
-
     const char* mqname_call = "upcmq-call";
     int mq_call[2];
     mqopen(mqname_call,mq_call);

@@ -11,9 +11,40 @@ void child(const char* path)
     }
 }
 
+/* BROKEN */
+void run_services()
+{
+    const int list_max_size = 512;
+    char list [list_max_size];
+    int list_fd = open("/etc/services",0);
+    int list_len = read(list_fd,list,list_max_size);
+    list[list_len] = 0;
+    char* ptr = NULL;
+    for(int i=0;i<list_len;i++)
+    {
+        char c = list[i];
+        if(c == ' ' || c == '\n')
+        {
+            if(ptr && list + i > ptr)
+            {
+                list[i] = 0;
+                printf("%s started\n",ptr);
+                child(ptr);
+                ptr=NULL;
+            }
+        }
+        else{
+            if(!ptr)
+            {
+                ptr = list + i;
+            }
+        }
+    }
+}
+
 int fmain()
 {
-    child("/bin/upcd");
+    child("/etc/upcd");
     setcwd("/home");
     int shell_pid = fork();
     if (shell_pid != 0)
