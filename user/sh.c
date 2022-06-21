@@ -114,6 +114,10 @@ int fmain()
         getcwd(cwd);
         printf("%s$ ",cwd);
         char* line = readline();
+        if(strlen(line) == 0)
+        {
+            exit(0);
+        }
         llist_t tokens = parse_input(line);
         
         int argslen = llist_size(&tokens);

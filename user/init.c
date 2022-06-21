@@ -2,6 +2,7 @@
 
 int fmain()
 {
+    setcwd("/home");
     int shell_pid = fork();
     if (shell_pid != 0)
     {
