@@ -28,6 +28,7 @@ OBJECTS =\
 	build/descriptor.o \
 	build/heapwatch.o \
 	build/pipe.o \
+	build/mq.o \
 	build/trace.o
 
 USER_BINS =\

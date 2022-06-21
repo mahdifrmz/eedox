@@ -80,21 +80,27 @@ void fd_table_close(fd_table* table, uint32_t fd_id)
     {
         fs_close(fd->ptr);
     }
-    else if(fd->kind == FD_KIND_PIPE)
+    else if(fd->kind == FD_KIND_PIPE || fd->kind == FD_KIND_MQ)
     {
         if(fd->access == FD_ACCESS_READ)
         {
-            pipe_close_rd(fd->ptr);
+            if(pipe_close_rd(fd->ptr) && fd->kind == FD_KIND_MQ)
+            {
+                kfree(fd->ptr);
+            }
         }
         else{
-            pipe_close_wr(fd->ptr);
+            if(pipe_close_wr(fd->ptr) && fd->kind == FD_KIND_MQ)
+            {
+                kfree(fd->ptr);
+            }
         }
     }
 }
 
 fd_t fd_table_clone_entry(fd_t* fd)
 {
-    if(fd->kind == FD_KIND_PIPE)
+    if(fd->kind == FD_KIND_PIPE || fd->kind == FD_KIND_MQ)
     {
         pipe_t* pipe = (pipe_t*)fd->ptr;
         (*(fd->access==FD_ACCESS_READ?&pipe->reader_count:&pipe->writer_count))++;

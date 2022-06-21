@@ -81,3 +81,4 @@ section .text
     SYSCALL_2R sbrk, 17
     SYSCALL_2R pipe, 18
     SYSCALL_2R dup, 19
+    SYSCALL_3R mqopen, 20

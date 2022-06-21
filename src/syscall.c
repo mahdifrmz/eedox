@@ -7,11 +7,13 @@
 #include <fs.h>
 #include <prog.h>
 #include <pipe.h>
+#include <mq.h>
 
 #define syscall_handlers_cap 64
 
 ksemaphore_t stdin_lock;
 syscall_handler_t syscall_handlers[syscall_handlers_cap];
+mqlist_t mqlist;
 
 int32_t syscall_translate_fs_err(int32_t err)
 {
@@ -543,6 +545,23 @@ int32_t syscall_pipe(registers *regs)
     return 0;
 }
 
+int32_t syscall_mqopen(registers *regs)
+{
+    const char* name = (const char*) regs->ebx;
+    uint32_t* fd_buffer = (uint32_t*) regs->ecx;
+    pipe_t* pipe = mqlist_open(&mqlist,name);
+    fd_t fd;
+    fd.isopen = 1;
+    fd.pos = 0;
+    fd.kind = FD_KIND_MQ;
+    fd.ptr = pipe;
+    fd.access = FD_ACCESS_READ;
+    fd_buffer[0] = fd_table_add(&task_curtask()->table,fd);
+    fd.access = FD_ACCESS_WRITE;
+    fd_buffer[1] = fd_table_add(&task_curtask()->table,fd);
+    return 0;
+}
+
 int32_t syscall_dup(registers *regs)
 {
     uint32_t index = regs->ebx;
@@ -561,6 +580,7 @@ int32_t syscall_dup(registers *regs)
 void syscalls_init()
 {
     ksemaphore_init(&stdin_lock, 1);
+    mqlist = mqlist_new();
     memset(syscall_handlers, 0, syscall_handlers_cap * sizeof(syscall_handler_t));
     syscall_handlers[SYSCALL_CLOSE] = syscall_close;
     syscall_handlers[SYSCALL_OPEN] = syscall_open;
@@ -581,5 +601,6 @@ void syscalls_init()
     syscall_handlers[SYSCALL_SBRK] = syscall_sbrk;
     syscall_handlers[SYSCALL_PIPE] = syscall_pipe;
     syscall_handlers[SYSCALL_DUP] = syscall_dup;
+    syscall_handlers[SYSCALL_MQOPEN] = syscall_mqopen;
     load_int_handler(INTCODE_SYSCALL, syscalls_handle);
 }

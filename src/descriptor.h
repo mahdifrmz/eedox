@@ -11,6 +11,7 @@
 #define FD_KIND_DISK 4
 #define FD_KIND_DIR 5
 #define FD_KIND_PIPE 6
+#define FD_KIND_MQ 7
 
 typedef struct
 {

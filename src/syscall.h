@@ -26,6 +26,7 @@ extern uint32_t kernel_memory_end;
 #define SYSCALL_SBRK 17
 #define SYSCALL_PIPE 18
 #define SYSCALL_DUP 19
+#define SYSCALL_MQOPEN 20
 
 #define SYSCALL_ERR_INVALID_FD -1
 #define SYSCALL_ERR_WRITEONLY -2
@@ -67,6 +68,7 @@ int32_t syscall_exit(registers *regs);
 int32_t syscall_wait(registers *regs);
 int32_t syscall_waitpid(registers *regs);
 int32_t syscall_getpid(registers *regs);
+int32_t syscall_mqopen(registers *regs);
 void syscalls_init();
 
 #endif

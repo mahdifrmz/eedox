@@ -41,6 +41,7 @@ pipe_t pipe_new()
     pipe.reader_count = 1;
     pipe.writer_count = 1;
     pipe.list = kqueue_new();
+    pipe.dead = 0;
     ksemaphore_init(&pipe.lock, 0);
     return pipe;
 }
@@ -51,23 +52,28 @@ void pipe_destroy(pipe_t *pipe)
     {
         kfree((void *)kqueue_pop(&pipe->list));
     }
-    kfree(pipe);
 }
 
-void pipe_close_rd(pipe_t *pipe)
+uint32_t pipe_close_rd(pipe_t *pipe)
 {
     pipe->reader_count--;
     if (!pipe->reader_count && !pipe->writer_count)
     {
         pipe_destroy(pipe);
+        pipe->dead = 1;
+        return 1;
     }
+    return 0;
 }
 
-void pipe_close_wr(pipe_t *pipe)
+uint32_t pipe_close_wr(pipe_t *pipe)
 {
     pipe->writer_count--;
     if (!pipe->reader_count && !pipe->writer_count)
     {
         pipe_destroy(pipe);
+        pipe->dead = 1;
+        return 1;
     }
+    return 0;
 }
