@@ -21,10 +21,12 @@ let bins = {}
 for (arg of process.argv.slice(3))
 {
     let buf = fs.readFileSync(arg)
+    const size = buf.length
     buf = Buffer.concat([buf,Buffer.alloc(sizeToAlloc(buf.length)*512 - buf.length)])
     bins[path.basename(arg)] = {
         kind:NODEKIND_FILE,
-        content:buf
+        content:buf,
+        size
     }
 }
 
@@ -55,18 +57,15 @@ collect(fs_tree)
 for (let i=0;i<nodes.length;i++)
 {
     let node = nodes[i]
-    if(node.kind == NODEKIND_FILE)
+    if(node.kind == NODEKIND_DIR)
     {
-        node.size = node.content.length
-    }
-    else{
         node.size = 0
         for(c in node.children)
         {
             node.size += c.length + 5
         }
     }
-    node.alloc = 1 + sizeToAlloc(node.size)
+    node.alloc = sizeToAlloc(node.size)
 }
 
 let allocPtr = 2
@@ -75,7 +74,7 @@ for(let i=0;i<nodes.length;i++)
 {
     let node = nodes[i]
     node.index = allocPtr
-    allocPtr += node.alloc
+    allocPtr += (node.alloc + 1)
 }
 
 for(let i=0;i<nodes.length;i++)

@@ -30,7 +30,7 @@ typedef struct inode_t inode_t;
 
 struct /*__attribute__((packed))*/ inode_t
 {
-    uint8_t isvalid;
+    uint32_t isvalid;
     uint32_t index; // lba
     uint32_t size;  // in bytes
     uint32_t alloc; // data sectors count
