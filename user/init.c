@@ -11,7 +11,6 @@ void child(const char* path)
     }
 }
 
-/* BROKEN */
 void run_services()
 {
     const int list_max_size = 512;
@@ -28,8 +27,8 @@ void run_services()
             if(ptr && list + i > ptr)
             {
                 list[i] = 0;
-                printf("%s started\n",ptr);
                 child(ptr);
+                printf("%s started\n",ptr);
                 ptr=NULL;
             }
         }
@@ -44,7 +43,7 @@ void run_services()
 
 int fmain()
 {
-    child("/etc/upcd");
+    run_services();
     setcwd("/home");
     int shell_pid = fork();
     if (shell_pid != 0)

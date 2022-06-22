@@ -108,6 +108,8 @@ fd_t fd_table_clone_entry(fd_t* fd)
     else if(fd->kind == FD_KIND_DISK || fd->kind == FD_KIND_DIR)
     {
         inode_t* node = (inode_t*)fd->ptr;
+        if(node->_parent)
+            node->_parent->_refs++;
         node->_refs++;
     }
     return *fd;
