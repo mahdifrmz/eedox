@@ -17,6 +17,7 @@ void run_services()
     char list [list_max_size];
     int list_fd = open("/etc/services",0);
     int list_len = read(list_fd,list,list_max_size);
+    close(list_fd);
     list[list_len] = 0;
     char* ptr = NULL;
     for(int i=0;i<list_len;i++)
@@ -28,7 +29,7 @@ void run_services()
             {
                 list[i] = 0;
                 child(ptr);
-                printf("%s started\n",ptr);
+                printf("INIT: %s started\n",ptr);
                 ptr=NULL;
             }
         }
