@@ -30,5 +30,5 @@ This an experimental and educational UNIX-like kernel I have been working on for
     - stat
     - wc
     - ...
-- shell interpretor
+- shell interpreter
 - standard library
