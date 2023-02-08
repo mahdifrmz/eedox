@@ -123,6 +123,11 @@ void ata_ihandler(__attribute__((unused)) registers *regs)
     {
         ata_current_op = ATA_OP_FLUSH;
         asm_outb(ATA_REG_CMD, ATA_CMD_CACHE_FLUSH);
+        if (ata_task)
+        {
+            task_awake(ata_task);
+            ata_task = NULL;
+        }
     }
     else
     {
